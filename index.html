@@ -715,23 +715,104 @@
     return L[n] || L[1];
   }
 
+  // 索子專用排位：跟返實物牌樣，2/3索企定同排，6/9加闊欄距，7係1+3欄x2
+  function bambooPipLayout(n){
+    const L = {
+      2:[[0.5,0.28],[0.5,0.72]],
+      3:[[0.5,0.2],[0.26,0.76],[0.74,0.76]],
+      6:[[0.2,0.16],[0.8,0.16],[0.2,0.5],[0.8,0.5],[0.2,0.84],[0.8,0.84]],
+      7:[[0.5,0.13],[0.2,0.42],[0.2,0.76],[0.5,0.42],[0.5,0.76],[0.8,0.42],[0.8,0.76]],
+      9:[[0.16,0.16],[0.5,0.16],[0.84,0.16],[0.16,0.5],[0.5,0.5],[0.84,0.5],[0.16,0.84],[0.5,0.84],[0.84,0.84]]
+    };
+    return L[n] || suitPipLayout(n);
+  }
+
+  // 筒子專用排位（同心圓靶心），跟返實物嘅綠/紅/深藍配色
+  function tongPipLayout(n){
+    const L = {
+      2:[[0.5,0.26],[0.5,0.74]],
+      3:[[0.24,0.2],[0.5,0.5],[0.76,0.8]],
+      4:[[0.28,0.26],[0.72,0.26],[0.28,0.74],[0.72,0.74]],
+      5:[[0.28,0.24],[0.72,0.24],[0.5,0.5],[0.28,0.76],[0.72,0.76]],
+      6:[[0.28,0.2],[0.72,0.2],[0.28,0.52],[0.72,0.52],[0.28,0.84],[0.72,0.84]],
+      7:[[0.28,0.1],[0.5,0.2],[0.72,0.3],[0.28,0.58],[0.72,0.58],[0.28,0.86],[0.72,0.86]],
+      8:[[0.3,0.13],[0.7,0.13],[0.3,0.37],[0.7,0.37],[0.3,0.61],[0.7,0.61],[0.3,0.85],[0.7,0.85]],
+      9:[[0.26,0.15],[0.5,0.15],[0.74,0.15],[0.26,0.5],[0.5,0.5],[0.74,0.5],[0.26,0.85],[0.5,0.85],[0.74,0.85]]
+    };
+    return L[n] || [[0.5,0.5]];
+  }
+  function tongColors(n){
+    const GREEN='#2E7D63', NAVY='#1C2A4A', RED='#B23A2E';
+    const C = {
+      2:[GREEN,NAVY],
+      3:[GREEN,RED,NAVY],
+      4:[GREEN,NAVY,NAVY,GREEN],
+      5:[GREEN,NAVY,RED,NAVY,GREEN],
+      6:[GREEN,GREEN,RED,RED,RED,RED],
+      7:[GREEN,GREEN,GREEN,RED,RED,RED,RED],
+      8:[NAVY,NAVY,NAVY,NAVY,NAVY,NAVY,NAVY,NAVY],
+      9:[GREEN,GREEN,GREEN,RED,RED,RED,NAVY,NAVY,NAVY]
+    };
+    return C[n] || [];
+  }
+
   function tileVisualSvg(suit, rank, color){
     const W=32,H=44,padX=4.5,padY=6;
     const usableW=W-padX*2, usableH=H-padY*2;
-    const pts = suitPipLayout(rank);
-    if(suit==='p'){ // 筒：圈圈
-      const r = pts.length>=7?2.0:2.5;
-      const circles = pts.map(([fx,fy])=>{
+    const RED='#B23A2E';
+
+    if(suit==='p'){ // 筒：同心圓靶心，跟返實物嘅綠/紅/深藍配色
+      if(rank===1){ // 一筒：特殊花紋
+        const petals = [];
+        for(let i=0;i<8;i++){
+          const ang = (i/8)*Math.PI*2;
+          const px = 16+Math.cos(ang)*7, py = 22+Math.sin(ang)*7;
+          petals.push(`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="2.6" fill="none" stroke="#2E7D63" stroke-width="1.1"/>`);
+        }
+        return `<svg viewBox="0 0 ${W} ${H}" width="30" height="42">
+          <circle cx="16" cy="22" r="12" fill="none" stroke="#2E7D63" stroke-width="1.3"/>
+          ${petals.join('')}
+          <circle cx="16" cy="22" r="3.4" fill="#B23A2E"/>
+        </svg>`;
+      }
+      const pts = tongPipLayout(rank);
+      const colors = tongColors(rank);
+      const rOuter = pts.length>=7?2.3:2.8, rGap=rOuter*0.62, rInner=rOuter*0.3;
+      const circles = pts.map(([fx,fy],idx)=>{
         const cx=(padX+fx*usableW).toFixed(1), cy=(padY+fy*usableH).toFixed(1);
-        return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="1.2"/><circle cx="${cx}" cy="${cy}" r="${(r*0.4).toFixed(1)}" fill="${color}"/>`;
+        const c = colors[idx] || color;
+        return `<circle cx="${cx}" cy="${cy}" r="${rOuter.toFixed(1)}" fill="${c}"/><circle cx="${cx}" cy="${cy}" r="${rGap.toFixed(1)}" fill="#F3F5FA"/><circle cx="${cx}" cy="${cy}" r="${rInner.toFixed(1)}" fill="${c}"/>`;
       }).join('');
       return `<svg viewBox="0 0 ${W} ${H}" width="30" height="42">${circles}</svg>`;
     }
-    // 索：竹枝
-    const barW=2.4, barH = pts.length>=7?6.5:8.5;
-    const bars = pts.map(([fx,fy])=>{
+
+    // 索：一索係雀仔圖案，8索係M/W鋸齒，其餘係直條（跟返實物欄距同顏色）
+    if(rank===1){
+      return `<svg viewBox="0 0 ${W} ${H}" width="30" height="42">
+        <ellipse cx="16" cy="27" rx="7" ry="9.5" fill="${color}"/>
+        <circle cx="16" cy="13.5" r="5.2" fill="${color}"/>
+        <polygon points="16,8.3 13,4.5 19,4.5" fill="#B23A2E"/>
+        <path d="M9,29 Q3,33 7,38" stroke="${color}" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path d="M23,29 Q29,33 25,38" stroke="${color}" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <circle cx="14" cy="12.5" r="0.9" fill="#F3F5FA"/>
+      </svg>`;
+    }
+    if(rank===8){
+      return `<svg viewBox="0 0 ${W} ${H}" width="30" height="42">
+        <path d="M8,8 L8,20 L16,14 L24,20 L24,8" stroke="${color}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M8,36 L8,24 L16,30 L24,24 L24,36" stroke="${color}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`;
+    }
+    const pts = bambooPipLayout(rank);
+    const colorAt = (idx)=>{
+      if(rank===7 && idx===0) return RED;
+      if(rank===9 && idx%3===1) return RED;
+      return color;
+    };
+    const barW=3.1, barH = pts.length>=7?7.5:8.5;
+    const bars = pts.map(([fx,fy],idx)=>{
       const cx=padX+fx*usableW, cy=padY+fy*usableH;
-      return `<rect x="${(cx-barW/2).toFixed(1)}" y="${(cy-barH/2).toFixed(1)}" width="${barW}" height="${barH}" rx="1.2" fill="${color}"/>`;
+      return `<rect x="${(cx-barW/2).toFixed(1)}" y="${(cy-barH/2).toFixed(1)}" width="${barW}" height="${barH}" rx="1.2" fill="${colorAt(idx)}"/>`;
     }).join('');
     return `<svg viewBox="0 0 ${W} ${H}" width="30" height="42">${bars}</svg>`;
   }
@@ -757,8 +838,8 @@
         const numChar = CN_NUM[rank] || m[1];
         const suitChar = SUIT_DISPLAY[m[2]];
         return `<div style="width:32px;height:44px;background:#F3F5FA;${border}border-radius:5px;
-          display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-weight:800;font-size:14px;line-height:1;color:${color};${shadow}">
-          <span>${numChar}</span><span>${suitChar}</span>
+          display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-weight:800;font-size:14px;line-height:1;${shadow}">
+          <span style="color:#2456a6;">${numChar}</span><span style="color:${color};">${suitChar}</span>
         </div>`;
       }
       const svg = tileVisualSvg(m[2], rank, color);
