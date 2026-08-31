@@ -1,0 +1,1882 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>港式麻雀 計數枱</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Plus+Jakarta+Sans:wght@500;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --felt:#F3F6FC;
+    --felt-dark:#2E3B55;
+    --felt-line:rgba(46,59,85,0.08);
+    --ivory:#FFFFFF;
+    --ivory-dim:#E2E7F2;
+    --ink:#2E3B55;
+    --bamboo:#2E9E7C;
+    --brass:#5B6FE0;
+    --vermilion:#E0507A;
+    --jade:#2E9E7C;
+    --text-dim:#7686A8;
+    --shadow: 0 2px 8px rgba(46,59,85,0.08), 0 8px 20px rgba(46,59,85,0.08);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% 0%, rgba(91,111,224,0.08), transparent 45%),
+      radial-gradient(circle at 100% 100%, rgba(46,158,124,0.10), transparent 55%),
+      var(--felt);
+    background-attachment:fixed;
+    color:var(--ink);
+    font-family:'Plus Jakarta Sans','Noto Sans TC', sans-serif;
+    min-height:100vh;
+    padding:20px 14px 60px;
+  }
+  .app{max-width:760px;margin:0 auto;}
+  header{text-align:center;padding:14px 0 8px;}
+  header h1{
+    font-family:'Plus Jakarta Sans','Noto Sans TC',sans-serif;
+    font-weight:900;
+    font-size:clamp(26px,6vw,36px);
+    margin:0;
+    letter-spacing:1px;
+    color:var(--ink);
+  }
+  header p{margin:6px 0 0;color:var(--text-dim);font-size:13px;letter-spacing:1px;}
+
+  .tile-divider{display:flex;justify-content:center;gap:10px;margin:16px 0 20px;opacity:0.9;}
+  .tile-divider span{
+    width:26px;height:34px;background:var(--ivory);border:1.5px solid var(--ivory-dim);border-radius:6px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Plus Jakarta Sans','Noto Sans TC',sans-serif;font-weight:900;font-size:15px;color:var(--brass);
+    box-shadow:0 3px 8px rgba(46,59,85,0.12);
+    transform:rotate(var(--r,0deg));
+  }
+  .tile-divider span:nth-child(1){--r:-6deg;}
+  .tile-divider span:nth-child(3){--r:6deg;}
+
+  .tabs{display:flex;gap:10px;margin-bottom:18px;}
+  .tab-btn{
+    flex:1;padding:13px 8px;border:1.5px solid var(--ivory-dim);border-radius:10px 10px 4px 4px;
+    background:var(--ivory-dim);color:var(--ink);
+    font-family:'Plus Jakarta Sans','Noto Sans TC',sans-serif;font-weight:700;font-size:15px;
+    cursor:pointer;box-shadow:var(--shadow);
+    transform:translateY(0);transition:transform .12s ease;
+    letter-spacing:1px;
+  }
+  .tab-btn.active{background:var(--ivory);border-color:var(--brass);transform:translateY(4px);box-shadow:0 2px 6px rgba(46,59,85,0.15);color:var(--brass);}
+  .tab-btn:not(.active):hover{transform:translateY(2px);}
+
+  .panel{display:none;}
+  .panel.active{display:block;animation:fade .18s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  .card{
+    background:var(--ivory);color:var(--ink);border-radius:12px;
+    padding:16px;margin-bottom:14px;box-shadow:var(--shadow);
+  }
+  .card h2{
+    font-family:'Plus Jakarta Sans','Noto Sans TC',sans-serif;font-size:16px;margin:0 0 12px;
+    padding-bottom:8px;border-bottom:2px solid var(--ivory-dim);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .card h2 .cat-tag{font-size:11px;background:var(--bamboo);color:var(--ivory);padding:2px 8px;border-radius:20px;font-family:'Noto Sans TC';font-weight:500;}
+
+  .fan-group{margin-bottom:10px;}
+  .fan-group-label{font-size:12px;color:var(--bamboo);font-weight:700;margin:10px 0 6px;letter-spacing:1px;}
+  .fan-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px;}
+  .fan-item{
+    display:flex;align-items:center;justify-content:space-between;gap:6px;
+    background:#fff;border:1.5px solid var(--ivory-dim);border-radius:8px;
+    padding:8px 10px;cursor:pointer;user-select:none;transition:.12s;
+  }
+  .fan-item:hover{border-color:var(--brass);}
+  .fan-item.checked{background:#EEF0FC;border-color:var(--brass);box-shadow:inset 0 0 0 1px var(--brass);}
+  .fan-item .name{font-size:13px;line-height:1.3;}
+  .fan-item .val{
+    font-family:'IBM Plex Mono';font-weight:600;font-size:12px;color:var(--vermilion);
+    background:var(--ivory-dim);border-radius:5px;padding:2px 6px;min-width:22px;text-align:center;flex-shrink:0;
+  }
+  .fan-item.checked .val{background:var(--brass);color:#fff;}
+
+  .stepper-row{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1.5px solid var(--ivory-dim);border-radius:8px;padding:8px 10px;margin-top:4px;}
+  .stepper-row .name{font-size:13px;}
+  .stepper{display:flex;align-items:center;gap:8px;}
+  .stepper button{width:26px;height:26px;border-radius:6px;border:none;background:var(--bamboo);color:#fff;font-size:16px;cursor:pointer;line-height:1;}
+  .stepper span{font-family:'IBM Plex Mono';font-weight:700;min-width:16px;text-align:center;}
+
+  .custom-add{display:flex;gap:6px;margin-top:10px;}
+  .custom-add input[type=text]{flex:1;}
+  .custom-add input[type=number]{width:60px;}
+  .custom-list{margin-top:8px;display:flex;flex-direction:column;gap:6px;}
+  .custom-list .fan-item{width:100%;}
+  .del-x{background:none;border:none;color:var(--vermilion);font-size:15px;cursor:pointer;padding:0 2px;}
+
+  input[type=text],input[type=number]{
+    font-family:'Noto Sans TC';border:1.5px solid var(--ivory-dim);border-radius:6px;
+    padding:7px 9px;font-size:13px;background:#fff;color:var(--ink);
+  }
+  input[type=number]{font-family:'IBM Plex Mono';}
+  label.small{font-size:12px;color:var(--text-dim);}
+
+  .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;}
+  .settings-grid .field{display:flex;flex-direction:column;gap:4px;}
+  .settings-grid .field.wide{grid-column:1/-1;}
+  .toggle-row{display:flex;align-items:center;gap:8px;font-size:12px;}
+  .switch{position:relative;width:38px;height:21px;flex-shrink:0;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{position:absolute;inset:0;background:#CDD3E6;border-radius:20px;cursor:pointer;transition:.15s;}
+  .slider:before{content:"";position:absolute;width:16px;height:16px;left:2.5px;top:2.5px;background:#fff;border-radius:50%;transition:.15s;}
+  .switch input:checked + .slider{background:var(--jade);}
+  .switch input:checked + .slider:before{transform:translateX(17px);}
+
+  .total-bar{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    background:var(--felt-dark);color:#fff;border-radius:10px;padding:14px 16px;margin-top:6px;
+  }
+  .total-bar .tot-fan{font-family:'Plus Jakarta Sans','Noto Sans TC',sans-serif;font-weight:900;font-size:30px;color:#8CD3B8;}
+  .total-bar .tot-label{font-size:11px;color:#B7C0DC;letter-spacing:1px;}
+  .total-bar .tot-units{font-family:'IBM Plex Mono';font-size:14px;}
+  .warn{color:var(--vermilion);font-size:12px;margin-top:8px;font-weight:700;}
+
+  .payout-preview{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+  .payout-box{background:#fff;border:1.5px dashed var(--ivory-dim);border-radius:8px;padding:10px;text-align:center;}
+  .payout-box .lbl{font-size:11px;color:var(--text-dim);}
+  .payout-box .amt{font-family:'IBM Plex Mono';font-weight:700;font-size:18px;color:var(--jade);}
+
+  .btn{
+    border:none;border-radius:8px;padding:11px 16px;font-family:'Noto Sans TC';font-weight:700;
+    font-size:14px;cursor:pointer;letter-spacing:1px;
+  }
+  .btn-primary{background:var(--brass);color:#fff;box-shadow:0 4px 0 #3d4bb0;}
+  .btn-primary:active{transform:translateY(3px);box-shadow:none;}
+  .btn-ghost{background:transparent;border:1.5px solid var(--ivory-dim);color:var(--text-dim);}
+  .btn-row{display:flex;gap:10px;margin-top:14px;}
+  .btn-row .btn{flex:1;}
+  .btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+  /* game tab */
+  .players-grid{
+    display:grid;gap:8px;
+    grid-template-columns:1fr 1fr 1fr;
+    grid-template-rows:1fr 1fr 1fr;
+    grid-template-areas:
+      ".    north  ."
+      "west center east"
+      ".    south  .";
+    max-width:380px;
+    aspect-ratio:1;
+    margin:0 auto;
+  }
+  .players-grid .pos-north{grid-area:north;}
+  .players-grid .pos-south{grid-area:south;}
+  .players-grid .pos-east{grid-area:east;}
+  .players-grid .pos-west{grid-area:west;}
+  .table-center{
+    grid-area:center;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:var(--felt-dark);border-radius:50%;aspect-ratio:1;padding:6px;position:relative;
+    box-shadow:inset 0 0 0 3px #8CD3B8, 0 3px 10px rgba(46,59,85,0.25);
+  }
+  .table-center .turn-arrow{position:absolute;inset:0;width:100%;height:100%;}
+  .table-center .center-char{
+    font-family:'Plus Jakarta Sans','Noto Sans TC',sans-serif;font-weight:900;font-size:30px;
+    color:#fff;position:relative;z-index:1;line-height:1;
+  }
+  @media(max-width:480px){
+    .players-grid{max-width:300px;}
+    .table-center .center-char{font-size:22px;}
+  }
+  .player-card{
+    background:#fff;border-radius:10px;padding:6px;border:1.5px solid var(--ivory-dim);position:relative;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+    aspect-ratio:1;overflow:visible;
+  }
+  .player-card input[type=text]{width:92%;font-weight:700;font-size:12.5px;text-align:center;padding:4px 3px;}
+  .player-card .score{font-family:'IBM Plex Mono';font-weight:700;font-size:16px;margin-top:4px;line-height:1;}
+  .score.pos{color:var(--jade);}
+  .score.neg{color:var(--vermilion);}
+  .score.zero{color:var(--text-dim);}
+  .dealer-badge{
+    position:absolute;top:-9px;right:-7px;background:var(--brass);color:#fff;font-size:10px;
+    padding:3px 8px;border-radius:20px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(46,59,85,0.35);
+    border:1.5px solid #fff;z-index:2;
+  }
+  .set-dealer{background:none;border:none;font-size:9px;color:var(--bamboo);cursor:pointer;margin-top:3px;text-decoration:underline;padding:0;}
+  .set-empty{background:none;border:none;font-size:9px;color:var(--text-dim);cursor:pointer;margin-top:1px;text-decoration:underline;padding:0;}
+  .player-card.is-empty{
+    background:repeating-linear-gradient(45deg,#EEF1F8,#EEF1F8 6px,#E2E7F2 6px,#E2E7F2 12px);
+    border-style:dashed;color:var(--text-dim);
+  }
+  .player-card.is-empty .empty-label{font-size:11px;font-weight:700;color:var(--text-dim);}
+  .player-card.is-empty .empty-sub{font-size:9px;color:#A3AEC7;margin-top:2px;}
+
+  .radio-pills{display:flex;flex-wrap:wrap;gap:6px;}
+  .pill{
+    padding:7px 12px;border-radius:20px;border:1.5px solid var(--ivory-dim);background:#fff;
+    font-size:12.5px;cursor:pointer;color:var(--ink);
+  }
+  .pill.active{background:var(--brass);border-color:var(--brass);color:#fff;font-weight:700;}
+  .field-label{font-size:12px;color:var(--text-dim);margin:10px 0 6px;font-weight:700;}
+
+  .history-item{
+    background:#fff;border-radius:8px;padding:10px 12px;margin-bottom:8px;
+    display:flex;align-items:center;gap:10px;border-left:5px solid var(--brass);
+  }
+  .history-item.draw{border-left-color:#A3AEC7;}
+  .history-item .badge{
+    width:34px;height:34px;border-radius:6px;background:var(--felt-dark);color:#8CD3B8;
+    display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono';font-weight:700;font-size:13px;flex-shrink:0;
+  }
+  .history-item .info{flex:1;font-size:12.5px;line-height:1.5;}
+  .history-item .info b{font-size:13.5px;}
+  .history-item .amt{font-family:'IBM Plex Mono';font-weight:700;font-size:15px;color:var(--jade);}
+  .history-item .del{background:none;border:none;color:#A3AEC7;font-size:16px;cursor:pointer;}
+  .empty-hint{text-align:center;color:var(--text-dim);font-size:13px;padding:20px 0;}
+
+  footer{text-align:center;color:var(--text-dim);font-size:11px;margin-top:20px;opacity:0.7;}
+  @media(max-width:420px){.fan-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>港式麻雀 計數枱</h1>
+    <p>計番 · 埋數 · 記低邊個贏邊個輸</p>
+  </header>
+  <div class="tile-divider"><span>萬</span><span>東</span><span>中</span></div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="calc">計番器</button>
+    <button class="tab-btn" data-tab="game">對局記錄</button>
+    <button class="tab-btn" data-tab="history">牌型記錄</button>
+  </div>
+
+  <div class="card" style="padding:10px 14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:180px;">
+        <span class="small" style="white-space:nowrap;">☁️ 雲端網址</span>
+        <input type="text" id="sheetUrlInput" placeholder="貼入 Apps Script /exec 網址" readonly style="flex:1;min-width:0;font-size:11px;background:#E9ECF5;color:#6b7690;cursor:default;">
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="small" id="syncStatus" style="color:var(--text-dim);">未連接</span>
+        <button class="btn btn-ghost" id="syncNowBtn" style="padding:6px 10px;font-size:12px;">立即同步</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== 計番器 ===================== -->
+  <section id="calc" class="panel active">
+    <div class="card">
+      <h2>AI 影相辨牌 <span class="cat-tag">Gemini</span></h2>
+      <div class="settings-grid" style="margin-bottom:10px;">
+        <div class="field wide">
+          <label class="small">Gemini API Key（只存喺你部機瀏覽器度，唔會傳去第三方）</label>
+          <input type="password" id="geminiKey" placeholder="貼入你自己嘅 API Key">
+        </div>
+        <div class="field wide">
+          <label class="small">模型名稱（用唔到可以去 Google AI Studio 睇返最新型號名）</label>
+          <input type="text" id="geminiModel" value="gemini-3.1-flash-lite">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none;">
+        <button class="btn btn-ghost" id="choosePhotoBtn">📷 影相 / 上傳相</button>
+        <span class="small" id="photoName" style="color:#6b7690;">未揀相</span>
+      </div>
+      <img id="photoPreview" style="display:none;max-width:100%;border-radius:8px;margin-top:10px;">
+      <button class="btn btn-primary" id="analyzeBtn" style="margin-top:10px;width:100%;" disabled>用 AI 分析張相</button>
+
+      <div class="field-label" style="margin-top:14px;">或者自己揀牌（唔使影相）</div>
+      <div id="manualTileDisplay" style="display:flex;flex-wrap:wrap;gap:3px;padding:8px;background:var(--felt-dark);border-radius:8px;min-height:52px;"></div>
+      <p class="small" id="manualTileCount" style="margin:6px 0;color:var(--text-dim);">已揀 0 隻（標準手牌14隻，花牌另計）</p>
+      <div id="manualPalette"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="manualClearBtn">清空重揀</button>
+        <button class="btn btn-primary" id="manualCalcBtn">計算呢手牌</button>
+      </div>
+
+      <div id="aiStatus" class="small" style="margin-top:8px;color:#6b7690;"></div>
+      <div id="aiResult" style="display:none;margin-top:12px;">
+        <div class="field-label">讀到嘅牌</div>
+        <div id="aiHandVisual" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:var(--felt-dark);border-radius:8px;"></div>
+        <div class="field-label">判斷到嘅番種／自摸（撳一下可以剔走／加）</div>
+        <div class="custom-list" id="aiSuggestList"></div>
+        <p class="small" id="aiNotes" style="margin-top:8px;color:#6b7690;"></p>
+        <div class="warn" style="display:block;">呢個判斷僅供參考，套用之前記得自己核對一下！</div>
+        <button class="btn btn-primary" id="applyAiBtn" style="margin-top:8px;width:100%;">套用去計番</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>座位資訊 <span class="cat-tag">計正花・正風</span></h2>
+      <div class="field-label" style="margin-top:0;">你座位喺邊(用嚟自動判斷正花/門風)</div>
+      <div class="radio-pills" id="calcSeatPills"></div>
+      <p class="small" id="calcSeatInfo" style="margin-top:8px;color:#6b7690;"></p>
+    </div>
+
+    <div class="card">
+      <h2>揀番種</h2>
+      <div id="fanGroups"></div>
+
+      <div class="fan-group-label">花牌</div>
+      <div style="display:flex;gap:8px;">
+        <div class="fan-item" style="flex:1;">
+          <span class="name" style="font-size:12px;">正花</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div class="stepper" style="gap:4px;">
+              <button data-fstep="zheng" data-dir="-1" style="width:20px;height:20px;font-size:13px;">－</button>
+              <span id="zhengCount" style="min-width:12px;font-size:12px;">0</span>
+              <button data-fstep="zheng" data-dir="1" style="width:20px;height:20px;font-size:13px;">＋</button>
+            </div>
+            <span class="val" data-editval="zhengVal" id="zhengValDisp">1</span>
+          </div>
+        </div>
+        <div class="fan-item" id="noFlowerNote" style="flex:1;">
+          <span class="name" style="font-size:12px;">無花</span>
+          <span class="val" data-editval="noFlowerVal">1</span>
+        </div>
+      </div>
+
+      <div class="fan-group-label">正風（門風・圈風）</div>
+      <div class="fan-grid">
+        <div class="fan-item" data-id="__menfeng">
+          <span class="name" id="menfengLabel">門風刻</span>
+          <span class="val" data-editval="menfengVal">1</span>
+        </div>
+        <div class="fan-item" data-id="__quanfeng">
+          <span class="name" id="quanfengLabel">圈風刻</span>
+          <span class="val" data-editval="quanfengVal">1</span>
+        </div>
+      </div>
+
+      <div class="fan-group-label">三元牌（中・發・白）</div>
+      <div class="fan-grid" style="grid-template-columns:repeat(3,1fr);" id="sanyuanGrid">
+        <div class="fan-item" data-sanyuan="Zh" style="justify-content:center;">
+          <span class="name">中</span>
+        </div>
+        <div class="fan-item" data-sanyuan="Fa" style="justify-content:center;">
+          <span class="name">發</span>
+        </div>
+        <div class="fan-item" data-sanyuan="Bai" style="justify-content:center;">
+          <span class="name">白</span>
+        </div>
+      </div>
+      <p class="small" id="sanyuanValNote" style="margin-top:6px;color:var(--text-dim);cursor:pointer;text-decoration:underline;">每副 1番（撳呢度可以改）</p>
+
+      <div class="fan-group-label">自訂番種</div>
+      <div class="custom-list" id="customList"></div>
+      <div class="custom-add">
+        <input type="text" id="customName" placeholder="番種名稱">
+        <input type="number" id="customVal" placeholder="番" min="0" value="1">
+        <button class="btn btn-ghost" id="addCustomBtn">加</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>換算表（番 → 台）</h2>
+      <div id="fanTableGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;"></div>
+      <p class="small" style="margin-top:8px;color:#7686A8;">已鎖死用「全銃制・半辣上・一二蚊」：表內數字係出銃者實付嘅金額，自摸每人係呢個數嘅一半（呢個表暫時唔畀改）。</p>
+    </div>
+
+    <div class="card">
+      <h2>總計</h2>
+      <div class="total-bar">
+        <div>
+          <div class="tot-label">總番数</div>
+          <div class="tot-fan" id="totFan">0</div>
+        </div>
+        <div class="tot-units" id="totUnits">0 台</div>
+      </div>
+      <div id="fanWarn" class="warn" style="display:none;"></div>
+      <div class="payout-preview">
+        <div class="payout-box">
+          <div class="lbl">自摸・其餘各家每人付</div>
+          <div class="amt" id="previewZimo">$0</div>
+        </div>
+        <div class="payout-box">
+          <div class="lbl">出銃・出銃者一人付</div>
+          <div class="amt" id="previewChong">$0</div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="resetCalcBtn">重設計番</button>
+        <button class="btn btn-primary" id="applyToGameBtn">加入對局記錄 →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 對局記錄 ===================== -->
+  <section id="game" class="panel">
+    <div class="card">
+      <h2>牌友 <span class="cat-tag" id="playerCountTag">3人</span></h2>
+      <div class="radio-pills" style="margin-bottom:12px;">
+        <button class="pill" data-pcount="3">三人麻雀</button>
+        <button class="pill" data-pcount="4">四人麻雀</button>
+      </div>
+      <div class="players-grid" id="playersGrid"></div>
+      <p class="small" id="lockSeatNote" style="margin-top:10px;color:#6b7690;text-align:center;"></p>
+    </div>
+
+    <div class="card">
+      <h2>新增一局</h2>
+      <div class="field-label">邊個食糊？</div>
+      <div class="radio-pills" id="winnerPills"></div>
+
+      <div id="winDetails">
+        <div class="field-label">自摸 定 出銃？</div>
+        <div class="radio-pills">
+          <button class="pill active" data-mode="zimo">自摸</button>
+          <button class="pill" data-mode="chong">出銃（俾人打出嚟）</button>
+        </div>
+
+        <div id="discarderWrap" style="display:none;">
+          <div class="field-label">邊個出銃？</div>
+          <div class="radio-pills" id="discarderPills"></div>
+        </div>
+
+        <div class="field-label">呢鋪幾多番？</div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <input type="number" id="roundFan" min="0" value="3" style="width:80px;">
+          <span class="small" id="roundUnitsPreview" style="color:#6b7690;">= 4 台 · $4</span>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="drawBtn">流局</button>
+        <button class="btn btn-primary" id="submitRoundBtn">記錄呢鋪</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>對局記錄 <span class="cat-tag" id="roundCountTag">0 鋪</span></h2>
+      <div id="historyList"></div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="clearRoundsBtn">清空記錄（留番名）</button>
+        <button class="btn btn-ghost" id="resetAllBtn">全部重設</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 牌型記錄 ===================== -->
+  <section id="history" class="panel">
+    <div class="card">
+      <h2>過往食糊牌型</h2>
+      <p class="small" style="color:var(--text-dim);margin-top:0;">用AI影相分析嘅鋪會存低成手牌嘅圖案；手動揀番種嘅鋪就淨係存低番種名，冇實際牌面圖。</p>
+      <button class="btn btn-primary" id="exportPdfBtn" style="width:100%;margin-bottom:12px;">📄 匯出靚靚PDF牌局記錄</button>
+      <div id="pdfExportStatus" class="small" style="color:var(--text-dim);margin-bottom:8px;"></div>
+      <div id="handHistoryList"></div>
+    </div>
+  </section>
+
+  <!-- PDF 匯出用嘅隱藏排版（畫面睇唔到，淨係用嚟截圖做PDF） -->
+  <div id="pdfReportContent" style="position:absolute;top:-99999px;left:0;width:780px;background:#fff;padding:36px;font-family:'Noto Sans TC',sans-serif;color:#232733;"></div>
+
+  <footer>資料只存喺你自己部裝置嘅瀏覽器入面</footer>
+</div>
+
+<script>
+(function(){
+  const DEFAULT_FAN_ITEMS = [
+    {id:'pinghu',name:'平糊',val:1,cat:'一番'},
+    {id:'menqian',name:'門前清',val:1,cat:'一番'},
+    {id:'zimo1',name:'自摸',val:1,cat:'一番'},
+    {id:'haidi',name:'海底撈月',val:1,cat:'一番'},
+    {id:'duidui',name:'對對糊',val:3,cat:'三番'},
+    {id:'hunyise',name:'混一色',val:3,cat:'三番'},
+    {id:'xiaosanyuan',name:'小三元',val:4,cat:'大番'},
+    {id:'qingyise',name:'清一色',val:7,cat:'巨番'},
+    {id:'xiaosixi',name:'小四喜',val:7,cat:'巨番'},
+    {id:'dasanyuan',name:'大三元',val:8,cat:'巨番'},
+    {id:'dasixi',name:'大四喜',val:13,cat:'爆棚'},
+    {id:'shisanyao',name:'十三么',val:13,cat:'爆棚'},
+  ];
+  const REMOVED_FAN_IDS = ['queyimen','quanqiuren','bianzhang','qiazhang','danjiaojiang','gangshang','hedi','qianggang','hunyaojiu','sansetongshun','ziyise','tianhu','dihu'];
+  // 鎖死「全銃制・半辣上・一二蚊」：數值 = 出銃者實付金額，自摸每人係呢個數嘅一半
+  // 0-10番跟足使用者提供嘅表；11-13番跟「半辣上」規律（單數x1.5，雙數x2）延伸
+  const DEFAULT_FAN_TABLE = [
+    {fan:0,units:4},{fan:1,units:8},{fan:2,units:16},{fan:3,units:32},
+    {fan:4,units:64},{fan:5,units:96},{fan:6,units:128},{fan:7,units:192},
+    {fan:8,units:256},{fan:9,units:384},{fan:10,units:512},{fan:11,units:768},
+    {fan:12,units:1024},{fan:13,units:1536}
+  ];
+  const FAN_TABLE_VERSION = 11; // 版本號：改過鎖死計法時要 bump，令舊有已存嘅使用者自動更新
+
+  let state = {
+    sheetUrl: 'https://script.google.com/macros/s/AKfycbzufnlFzsBJ_Z71dI2c1VFM9xBZXAVZyP2N4LszCHjieMi3NAKwshZiblbqW3Q90ocI-A/exec', // Google Sheet (Apps Script) 雲端同步網址
+    fanItems: JSON.parse(JSON.stringify(DEFAULT_FAN_ITEMS)),
+    checked: {},
+    calcSeat: 0, // 0=東 1=南 2=西 3=北，用嚟計正花/門風
+    zhengCount: 0, zhengVal: 1, // 正花：襯自己座位嘅花，1隻1番
+    noFlowerVal: 1, // 一隻花都冇：+1番
+    menfengChecked: false, menfengVal: 1, // 門風刻：自己座位嘅風
+    quanfengChecked: false, quanfengVal: 1, // 圈風刻：依家個圈嘅風
+    sanyuanChecked: {Zh:false, Fa:false, Bai:false}, sanyuanVal: 1, // 三元牌刻（中發白），每副1番
+    customs: [], // {name,val}
+    fanTable: JSON.parse(JSON.stringify(DEFAULT_FAN_TABLE)),
+    fanTableLocked: true,
+    tableVersion: FAN_TABLE_VERSION,
+    minFan: 3,
+    maxFan: 8,
+    allowJi: false,
+    dealerDouble: false,
+  };
+
+
+  let game = {
+    players: ['東家','南家','西家','北家'],
+    emptySeat: 3, // 3人麻雀預設北家得閒；四人麻雀時呢個係 null
+    dealerIndex: 0,
+    roundWindIndex: 0, // 0=東圈, 1=南圈, 2=西圈, 3=北圈(要視乎邊個位得閒)
+    rounds: [], // {winner, mode, discarder, fan, units, amount, dealerIdx, isDraw, ts}
+  };
+
+  function activeIndices(){
+    return [0,1,2,3].filter(i => i !== game.emptySeat);
+  }
+  function nextActiveIndex(idx){
+    const active = activeIndices();
+    const pos = active.indexOf(idx);
+    return active[(pos+1) % active.length];
+  }
+
+  let roundMode = 'zimo';
+  let roundWinner = 0;
+  let roundDiscarder = null;
+
+  let aiPhoto = null; // {mimeType, base64}
+  let aiMatched = []; // [{id,name,val}] items suggested from local hand analysis
+  let aiZhengCount = 0;
+  let aiMenfeng = false;
+  let aiQuanfeng = false;
+  let aiSanyuanTiles = [];
+  let aiZimo = false;
+  let aiNotesText = '';
+  let aiResultData = null; // 最近一次 analyzeHand() 嘅完整結果，用嚟畫牌圖
+  let manualTiles = []; // 自己揀嘅牌（唔計花）
+  let manualFlowers = []; // 自己揀嘅花牌
+
+  // ---------- 本地麻雀牌型判斷（AI只負責讀牌，唔負責判番） ----------
+  const HONOR_TILES = ['E','S','W','N','Zh','Fa','Bai'];
+  const WIND_TILES = ['E','S','W','N'];
+  const DRAGON_TILES = ['Zh','Fa','Bai'];
+  const FLOWER_SEAT_MAP = {'梅':0,'蘭':1,'菊':2,'竹':3,'春':0,'夏':1,'秋':2,'冬':3};
+  const HONOR_DISPLAY = {E:'東',S:'南',W:'西',N:'北',Zh:'中',Fa:'發',Bai:'白'};
+  const SUIT_DISPLAY = {m:'萬',p:'筒',s:'索'};
+
+  function tileDisplayName(tag){
+    if(HONOR_DISPLAY[tag]) return HONOR_DISPLAY[tag];
+    const m = tag.match(/^(\d)([mps])$/);
+    if(m) return `${m[1]}${SUIT_DISPLAY[m[2]]}`;
+    return tag;
+  }
+
+  function decomposeSets(counts, sets){
+    const key = Object.keys(counts).find(k=>counts[k]>0);
+    if(!key) return true;
+    const cnt = counts[key];
+    if(cnt>=4){
+      counts[key]-=4; sets.push({type:'kong', tile:key});
+      if(decomposeSets(counts, sets)) return true;
+      sets.pop(); counts[key]+=4;
+    }
+    if(cnt>=3){
+      counts[key]-=3; sets.push({type:'triplet', tile:key});
+      if(decomposeSets(counts, sets)) return true;
+      sets.pop(); counts[key]+=3;
+    }
+    const m = key.match(/^(\d)([mps])$/);
+    if(m){
+      const rank = Number(m[1]), suit = m[2];
+      if(rank<=7){
+        const k2 = `${rank+1}${suit}`, k3 = `${rank+2}${suit}`;
+        if((counts[k2]||0)>0 && (counts[k3]||0)>0){
+          counts[key]--; counts[k2]=(counts[k2]||0)-1; counts[k3]=(counts[k3]||0)-1;
+          sets.push({type:'sequence', tile:key, suit, rank});
+          if(decomposeSets(counts, sets)) return true;
+          sets.pop(); counts[key]++; counts[k2]++; counts[k3]++;
+        }
+      }
+    }
+    return false;
+  }
+
+  function findDecomposition(tileList){
+    const counts = {};
+    tileList.forEach(t=> counts[t]=(counts[t]||0)+1);
+    const keys = Object.keys(counts);
+    for(const pairKey of keys){
+      if(counts[pairKey]>=2){
+        const c2 = {...counts};
+        c2[pairKey] -= 2;
+        const sets = [];
+        if(decomposeSets(c2, sets) && sets.length===4){
+          return {pair:pairKey, sets};
+        }
+      }
+    }
+    return null;
+  }
+
+  function describeSets(sets, pair){
+    const parts = sets.map(s=>{
+      if(s.type==='sequence') return `${tileDisplayName(s.tile)}${tileDisplayName((s.rank+1)+s.suit)}${tileDisplayName((s.rank+2)+s.suit)}順`;
+      if(s.type==='kong') return `${tileDisplayName(s.tile)}槓`;
+      return `${tileDisplayName(s.tile)}刻`;
+    });
+    parts.push(`${tileDisplayName(pair)}對`);
+    return parts.join('、');
+  }
+
+  function analyzeHand(tiles, flowers, seatIndex, roundWindCode){
+    const seatCodes = ['E','S','W','N'];
+    const seatWind = seatCodes[seatIndex];
+    let zhengCount=0, pianCount=0;
+    (flowers||[]).forEach(f=>{
+      if(FLOWER_SEAT_MAP[f]===undefined) return;
+      if(FLOWER_SEAT_MAP[f]===seatIndex) zhengCount++; else pianCount++;
+    });
+
+    const cleanTiles = (tiles||[]).filter(t=>typeof t==='string' && t.trim());
+    const cleanFlowers = (flowers||[]).filter(f=>FLOWER_SEAT_MAP[f]!==undefined);
+    const base = {matchedFanIds:[], zhengCount, pianCount, menfeng:false, quanfeng:false, sanyuanTiles:[], notes:'', tiles:cleanTiles, flowers:cleanFlowers, sets:null, pair:null};
+
+    if(cleanTiles.length < 13){
+      return {...base, error:'AI 讀到嘅牌唔夠13隻，未必影晒成手牌，建議重影一張再試。'};
+    }
+
+    // 十三么
+    const uniqueSet = new Set(cleanTiles);
+    const isYaoType = t => /^[19][mps]$/.test(t) || HONOR_TILES.includes(t);
+    if(cleanTiles.every(isYaoType)){
+      const thirteenTypes = ['1m','9m','1p','9p','1s','9s',...HONOR_TILES];
+      if(thirteenTypes.every(t=>uniqueSet.has(t))){
+        return {...base, matchedFanIds:['shisanyao'], notes:'手牌全部係老么／字牌，齊晒十三種類 → 十三么。'};
+      }
+    }
+
+    const decomposition = findDecomposition(cleanTiles);
+    if(!decomposition){
+      return {...base, notes:'呢副牌砌唔到「4組+1對」嘅標準糊牌形狀，AI可能讀錯咗某啲牌，麻煩自己核對每隻牌。'};
+    }
+    const {pair, sets} = decomposition;
+    const tripletLike = sets.filter(s=>s.type==='triplet'||s.type==='kong');
+
+    const matchedFanIds = [];
+    const suitsUsed = new Set();
+    let hasHonor = false;
+    sets.concat([{tile:pair}]).forEach(s=>{
+      const m = s.tile.match(/^(\d)([mps])$/);
+      if(m) suitsUsed.add(m[2]); else hasHonor = true;
+    });
+    if(suitsUsed.size===1 && !hasHonor) matchedFanIds.push('qingyise');
+    else if(suitsUsed.size===1 && hasHonor) matchedFanIds.push('hunyise');
+
+    if(tripletLike.length===4) matchedFanIds.push('duidui');
+    if(tripletLike.length===0) matchedFanIds.push('pinghu');
+
+    const windTriplets = tripletLike.filter(s=>WIND_TILES.includes(s.tile)).map(s=>s.tile);
+    const dragonTriplets = tripletLike.filter(s=>DRAGON_TILES.includes(s.tile)).map(s=>s.tile);
+    const menfeng = windTriplets.includes(seatWind);
+    const quanfeng = windTriplets.includes(roundWindCode);
+
+    if(windTriplets.length===4) matchedFanIds.push('dasixi');
+    else if(windTriplets.length===3 && WIND_TILES.includes(pair)) matchedFanIds.push('xiaosixi');
+
+    if(dragonTriplets.length===3) matchedFanIds.push('dasanyuan');
+    else if(dragonTriplets.length===2 && DRAGON_TILES.includes(pair)) matchedFanIds.push('xiaosanyuan');
+
+    return {matchedFanIds, zhengCount, pianCount, menfeng, quanfeng, sanyuanTiles:dragonTriplets, sets, pair, tiles:cleanTiles, flowers:cleanFlowers, notes:''};
+  }
+
+  function currentRoundWindCode(){
+    const codes = ['E','S','W','N'];
+    const active = activeIndices();
+    return active.map(i=>codes[i])[game.roundWindIndex % active.length];
+  }
+
+  // ---------- 麻雀牌圖形（用嚟代替文字描述） ----------
+  const FLOWER_NAMES = ['梅','蘭','竹','菊','春','夏','秋','冬'];
+  const CN_NUM = {1:'一',2:'二',3:'三',4:'四',5:'五',6:'六',7:'七',8:'八',9:'九'};
+
+  function suitPipLayout(n){
+    const L = {
+      1:[[0.5,0.5]],
+      2:[[0.32,0.28],[0.68,0.72]],
+      3:[[0.28,0.2],[0.5,0.5],[0.72,0.8]],
+      4:[[0.3,0.25],[0.7,0.25],[0.3,0.75],[0.7,0.75]],
+      5:[[0.3,0.25],[0.7,0.25],[0.5,0.5],[0.3,0.75],[0.7,0.75]],
+      6:[[0.3,0.16],[0.7,0.16],[0.3,0.5],[0.7,0.5],[0.3,0.84],[0.7,0.84]],
+      7:[[0.5,0.1],[0.3,0.32],[0.7,0.32],[0.3,0.56],[0.7,0.56],[0.3,0.84],[0.7,0.84]],
+      8:[[0.3,0.12],[0.7,0.12],[0.3,0.32],[0.7,0.32],[0.3,0.6],[0.7,0.6],[0.3,0.84],[0.7,0.84]],
+      9:[[0.3,0.14],[0.5,0.14],[0.7,0.14],[0.3,0.5],[0.5,0.5],[0.7,0.5],[0.3,0.86],[0.5,0.86],[0.7,0.86]]
+    };
+    return L[n] || L[1];
+  }
+
+  function tileVisualSvg(suit, rank, color){
+    const W=32,H=44,padX=4.5,padY=6;
+    const usableW=W-padX*2, usableH=H-padY*2;
+    const pts = suitPipLayout(rank);
+    if(suit==='p'){ // 筒：圈圈
+      const r = pts.length>=7?2.0:2.5;
+      const circles = pts.map(([fx,fy])=>{
+        const cx=(padX+fx*usableW).toFixed(1), cy=(padY+fy*usableH).toFixed(1);
+        return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="1.2"/><circle cx="${cx}" cy="${cy}" r="${(r*0.4).toFixed(1)}" fill="${color}"/>`;
+      }).join('');
+      return `<svg viewBox="0 0 ${W} ${H}" width="30" height="42">${circles}</svg>`;
+    }
+    // 索：竹枝
+    const barW=2.4, barH = pts.length>=7?6.5:8.5;
+    const bars = pts.map(([fx,fy])=>{
+      const cx=padX+fx*usableW, cy=padY+fy*usableH;
+      return `<rect x="${(cx-barW/2).toFixed(1)}" y="${(cy-barH/2).toFixed(1)}" width="${barW}" height="${barH}" rx="1.2" fill="${color}"/>`;
+    }).join('');
+    return `<svg viewBox="0 0 ${W} ${H}" width="30" height="42">${bars}</svg>`;
+  }
+
+  function tileIconHtml(tag, highlight){
+    const ring = highlight ? 'box-shadow:0 2px 0 rgba(0,0,0,0.15), inset 0 0 0 2px var(--brass);' : 'box-shadow:0 2px 0 rgba(0,0,0,0.15);';
+    if(FLOWER_NAMES.includes(tag)){
+      return `<div style="width:32px;height:44px;background:#FCE8F0;border:1.5px solid #E0507A;border-radius:5px;
+        display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#C23A63;${ring}">${tag}</div>`;
+    }
+    const honorText = {E:'東',S:'南',W:'西',N:'北',Zh:'中',Fa:'發',Bai:'白'};
+    const honorColor = {E:'#1c1c1c',S:'#1c1c1c',W:'#1c1c1c',N:'#1c1c1c',Zh:'#B23A2E',Fa:'#2E7D63',Bai:'#2456a6'};
+    const m = tag.match(/^(\d)([mps])$/);
+    if(m){
+      const suitColor = {m:'#B23A2E', p:'#2456a6', s:'#2E7D63'};
+      const color = suitColor[m[2]];
+      const rank = Number(m[1]);
+      if(m[2]==='m'){
+        const numChar = CN_NUM[rank] || m[1];
+        const suitChar = SUIT_DISPLAY[m[2]];
+        return `<div style="width:32px;height:44px;background:#F3F5FA;border:1.5px solid #C3CBE0;border-radius:5px;
+          display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-weight:800;font-size:14px;line-height:1;color:${color};${ring}">
+          <span>${numChar}</span><span>${suitChar}</span>
+        </div>`;
+      }
+      const svg = tileVisualSvg(m[2], rank, color);
+      return `<div style="width:32px;height:44px;background:#F3F5FA;border:1.5px solid #C3CBE0;border-radius:5px;
+        display:flex;align-items:center;justify-content:center;${ring}">${svg}</div>`;
+    }
+    const label = honorText[tag] || tag;
+    const color = honorColor[tag] || '#1c1c1c';
+    return `<div style="width:32px;height:44px;background:#F3F5FA;border:1.5px solid #C3CBE0;border-radius:5px;
+      display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:${color};${ring}">${label}</div>`;
+  }
+
+  // ---------- 自己揀牌（唔使影相） ----------
+  function renderManualPalette(){
+    const wrap = document.getElementById('manualPalette');
+    if(!wrap || wrap.dataset.built) return; // 淨係起一次，palette本身唔會變
+    const rows = [
+      {label:'萬', tags:[1,2,3,4,5,6,7,8,9].map(n=>`${n}m`)},
+      {label:'筒', tags:[1,2,3,4,5,6,7,8,9].map(n=>`${n}p`)},
+      {label:'索', tags:[1,2,3,4,5,6,7,8,9].map(n=>`${n}s`)},
+      {label:'風', tags:['E','S','W','N']},
+      {label:'元', tags:['Zh','Fa','Bai']},
+      {label:'花', tags:['梅','蘭','竹','菊','春','夏','秋','冬']}
+    ];
+    wrap.innerHTML = rows.map(row=>`
+      <div style="display:flex;align-items:center;gap:4px;margin-bottom:5px;">
+        <span class="small" style="width:20px;flex-shrink:0;color:var(--text-dim);">${row.label}</span>
+        <div style="display:flex;gap:3px;flex-wrap:wrap;">
+          ${row.tags.map(t=>`<button type="button" data-picktile="${t}" style="border:none;padding:0;background:none;cursor:pointer;">${tileIconHtml(t,false)}</button>`).join('')}
+        </div>
+      </div>`).join('');
+    wrap.querySelectorAll('[data-picktile]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        const tag = b.dataset.picktile;
+        if(FLOWER_NAMES.includes(tag)){
+          if(manualFlowers.length>=8){ return; }
+          manualFlowers.push(tag);
+        } else {
+          if(manualTiles.length>=18){ return; }
+          manualTiles.push(tag);
+        }
+        renderManualTileDisplay();
+      });
+    });
+    wrap.dataset.built = '1';
+  }
+
+  function renderManualTileDisplay(){
+    const wrap = document.getElementById('manualTileDisplay');
+    const countEl = document.getElementById('manualTileCount');
+    if(!wrap) return;
+    const tileChips = manualTiles.map((t,i)=>`<button type="button" data-removetile="${i}" style="border:none;padding:0;background:none;cursor:pointer;">${tileIconHtml(t,false)}</button>`).join('');
+    const flowerChips = manualFlowers.map((t,i)=>`<button type="button" data-removeflower="${i}" style="border:none;padding:0;background:none;cursor:pointer;">${tileIconHtml(t,false)}</button>`).join('');
+    wrap.innerHTML = tileChips + (manualFlowers.length? `<span style="width:1px;background:#556;margin:0 4px;"></span>${flowerChips}`:'') || '<span class="small" style="color:#B7C0DC;">撳下面嘅牌加入手牌…</span>';
+    countEl.textContent = `已揀 ${manualTiles.length} 隻牌${manualFlowers.length?`、${manualFlowers.length} 隻花`:''}（標準14隻，有開槓可以加多幾隻，撳格仔可以刪走）`;
+    wrap.querySelectorAll('[data-removetile]').forEach(b=>{
+      b.addEventListener('click', ()=>{ manualTiles.splice(Number(b.dataset.removetile),1); renderManualTileDisplay(); });
+    });
+    wrap.querySelectorAll('[data-removeflower]').forEach(b=>{
+      b.addEventListener('click', ()=>{ manualFlowers.splice(Number(b.dataset.removeflower),1); renderManualTileDisplay(); });
+    });
+  }
+
+  function buildHandVisualHtml(data){
+    if(!data) return '';
+    let html = '';
+    if(data.sets && data.pair){
+      data.sets.forEach(s=>{
+        let tags;
+        if(s.type==='sequence') tags = [s.tile, (s.rank+1)+s.suit, (s.rank+2)+s.suit];
+        else if(s.type==='kong') tags = [s.tile,s.tile,s.tile,s.tile];
+        else tags = [s.tile,s.tile,s.tile];
+        html += `<div style="display:flex;gap:2px;">${tags.map(t=>tileIconHtml(t,false)).join('')}</div>`;
+      });
+      html += `<div style="display:flex;gap:2px;">${tileIconHtml(data.pair,true)}${tileIconHtml(data.pair,true)}</div>`;
+    } else if(data.tiles && data.tiles.length){
+      // 冇拆到標準形狀，就淨係逐隻顯示畀你自己核對
+      html += `<div style="display:flex;flex-wrap:wrap;gap:2px;">${data.tiles.map(t=>tileIconHtml(t,false)).join('')}</div>`;
+    }
+    if(data.flowers && data.flowers.length){
+      html += `<div style="display:flex;gap:2px;margin-left:6px;">${data.flowers.map(f=>tileIconHtml(f,false)).join('')}</div>`;
+    }
+    return html;
+  }
+
+  function renderHandVisual(result){
+    const wrap = document.getElementById('aiHandVisual');
+    if(!wrap) return;
+    wrap.innerHTML = buildHandVisualHtml(result);
+  }
+
+  // ---------- 計番快照：用嚟記錄「呢鋪係點計出嚟嘅」，畀牌型記錄分頁用 ----------
+  let pendingHandSnapshot = null;
+
+  function buildCalcSnapshot(){
+    const fanNames = [];
+    state.fanItems.forEach(it=>{ if(state.checked[it.id]) fanNames.push(`${it.name}(${it.val}番)`); });
+    if(state.zhengCount>0) fanNames.push(`正花x${state.zhengCount}(${state.zhengCount*state.zhengVal}番)`);
+    if((state.zhengCount||0)===0) fanNames.push(`無花(${state.noFlowerVal}番)`);
+    if(state.menfengChecked) fanNames.push(`門風刻(${state.menfengVal}番)`);
+    if(state.quanfengChecked) fanNames.push(`圈風刻(${state.quanfengVal}番)`);
+    const dragonNames = {Zh:'中',Fa:'發',Bai:'白'};
+    ['Zh','Fa','Bai'].forEach(k=>{
+      if(state.sanyuanChecked && state.sanyuanChecked[k]) fanNames.push(`${dragonNames[k]}刻(${state.sanyuanVal}番)`);
+    });
+    state.customs.forEach(c=> fanNames.push(`${c.name}(${c.val}番)`));
+    const source = aiResultData ? 'ai' : 'manual';
+    const snapshot = {source, fanNames, totalFan: totalFan()};
+    if(aiResultData){
+      snapshot.sets = aiResultData.sets;
+      snapshot.pair = aiResultData.pair;
+      snapshot.tiles = aiResultData.tiles;
+      snapshot.flowers = aiResultData.flowers;
+    }
+    return snapshot;
+  }
+
+  function renderHandHistory(){
+    const wrap = document.getElementById('handHistoryList');
+    if(!wrap) return;
+    const winRounds = game.rounds.filter(r=>!r.isDraw).slice().reverse();
+    if(!winRounds.length){
+      wrap.innerHTML = '<div class="empty-hint">未有食糊記錄</div>';
+      return;
+    }
+    wrap.innerHTML = winRounds.map(r=>{
+      const dt = r.ts ? new Date(r.ts).toLocaleString('zh-HK',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+      let bodyHtml;
+      if(r.handSnapshot && (r.handSnapshot.sets || (r.handSnapshot.tiles&&r.handSnapshot.tiles.length))){
+        bodyHtml = `<div style="display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:var(--felt-dark);border-radius:8px;margin-top:8px;">${buildHandVisualHtml(r.handSnapshot)}</div>`;
+      } else if(r.handSnapshot && r.handSnapshot.fanNames && r.handSnapshot.fanNames.length){
+        bodyHtml = `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+          ${r.handSnapshot.fanNames.map(n=>`<span class="pill" style="cursor:default;">${n}</span>`).join('')}
+        </div>
+        <p class="small" style="margin-top:6px;color:var(--text-dim);">冇影相，手動輸入番種（冇實際牌面圖）</p>`;
+      } else {
+        bodyHtml = `<p class="small" style="margin-top:6px;color:var(--text-dim);">呢鋪冇存低番種明細，只有番数記錄。</p>`;
+      }
+      return `<div class="history-item" style="flex-direction:column;align-items:stretch;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="badge">${r.fan}番</div>
+          <div class="info"><b>${game.players[r.winner]}</b> 食糊 · ${r.mode==='zimo'?'自摸':'出銃'} · +$${r.amountTotal}</div>
+          <div class="small" style="color:var(--text-dim);">${dt}</div>
+        </div>
+        ${bodyHtml}
+      </div>`;
+    }).join('');
+  }
+
+
+  // ---------- storage helpers ----------
+  let sheetSyncBusy = false;
+  function setSyncStatus(text, ok){
+    const el = document.getElementById('syncStatus');
+    if(!el) return;
+    el.textContent = text;
+    el.style.color = ok===true ? 'var(--jade)' : ok===false ? 'var(--vermilion)' : 'var(--text-dim)';
+  }
+  async function sheetGet(key){
+    if(!state.sheetUrl) return null;
+    try{
+      const res = await fetch(`${state.sheetUrl}?key=${encodeURIComponent(key)}`);
+      const data = await res.json();
+      if(data && data.ok && data.value){ return data.value; }
+      return null;
+    }catch(e){ return null; }
+  }
+  async function sheetSet(key, value){
+    if(!state.sheetUrl) return false;
+    try{
+      await fetch(state.sheetUrl, {
+        method:'POST',
+        headers:{'Content-Type':'text/plain;charset=utf-8'}, // 用text/plain避免CORS preflight
+        body: JSON.stringify({key, value})
+      });
+      return true;
+    }catch(e){ return false; }
+  }
+
+  async function loadAll(){
+    let dedicatedSheetUrl = null;
+    try{
+      const u = await window.storage.get('mj-sheet-url');
+      if(u && u.value) dedicatedSheetUrl = u.value;
+    }catch(e){}
+    try{
+      const s = await window.storage.get('mj-settings');
+      if(s && s.value){ Object.assign(state, JSON.parse(s.value)); }
+    }catch(e){}
+    if(dedicatedSheetUrl) state.sheetUrl = dedicatedSheetUrl;
+    else if(state.sheetUrl){ try{ await window.storage.set('mj-sheet-url', state.sheetUrl); }catch(e){} }
+    try{
+      const g = await window.storage.get('mj-game');
+      if(g && g.value){ Object.assign(game, JSON.parse(g.value)); }
+    }catch(e){}
+
+    // 如果有雲端網址，試吓攞返雲端嗰份（優先於本機）
+    if(state.sheetUrl){
+      document.getElementById('sheetUrlInput').value = state.sheetUrl;
+      setSyncStatus('同步緊…');
+      const remoteSettings = await sheetGet('mj-settings');
+      if(remoteSettings){ try{ Object.assign(state, JSON.parse(remoteSettings)); state.sheetUrl = dedicatedSheetUrl; }catch(e){} }
+      const remoteGame = await sheetGet('mj-game');
+      if(remoteGame){ try{ Object.assign(game, JSON.parse(remoteGame)); }catch(e){} }
+      setSyncStatus(remoteSettings||remoteGame ? '已從雲端同步' : '已連接（雲端未有資料）', true);
+    }
+
+    // 如果係舊版（未鎖死一二蚊計法）嘅已存設定，強制更新去新換算表
+    if((state.tableVersion||1) < FAN_TABLE_VERSION){
+      state.fanTable = JSON.parse(JSON.stringify(DEFAULT_FAN_TABLE));
+      state.fanTableLocked = true;
+      state.minFan = 3;
+      state.maxFan = 8;
+      state.allowJi = false;
+      state.dealerDouble = false;
+      state.zhengVal = 1;
+      state.noFlowerVal = 1;
+      delete state.pianCount;
+      delete state.pianVal;
+      delete state.hasOtherFlowers;
+      delete state.sanyuanCount;
+      state.sanyuanChecked = {Zh:false, Fa:false, Bai:false};
+      // 拎走：缺一門/全求人/邊張/嵌張/單釣將/槓上開花/河底撈魚/搶槓/混么九/三色同順/字一色/天胡/地胡
+      state.fanItems = (state.fanItems||[]).filter(it => !REMOVED_FAN_IDS.includes(it.id));
+      REMOVED_FAN_IDS.forEach(id=>{ if(state.checked) delete state.checked[id]; });
+      // 補返新版先有嘅預設番種（例如首次使用嘅人）
+      DEFAULT_FAN_ITEMS.forEach(def=>{
+        if(!state.fanItems.some(it=>it.id===def.id)) state.fanItems.push(JSON.parse(JSON.stringify(def)));
+      });
+      state.tableVersion = FAN_TABLE_VERSION;
+      saveSettings();
+    }
+    // 舊版資料遷移：以前得3個位、冇「得閒位」概念，而家統一做4個位(東南西北)先揀邊個得閒
+    if(!Array.isArray(game.players) || game.players.length < 4){
+      const defaults = ['東家','南家','西家','北家'];
+      const old = Array.isArray(game.players) ? game.players : [];
+      game.players = defaults.map((d,i)=> old[i] || d);
+      if(typeof game.emptySeat !== 'number'){ game.emptySeat = old.length===3 ? 3 : null; }
+      game.rounds = [];
+      game.dealerIndex = 0;
+      game.roundWindIndex = 0;
+      saveGame();
+    }
+    if(game.emptySeat !== null && game.dealerIndex === game.emptySeat){
+      game.dealerIndex = nextActiveIndex(game.dealerIndex);
+      saveGame();
+    }
+    roundWinner = activeIndices()[0];
+    try{
+      const k = await window.storage.get('mj-gemini-key');
+      if(k && k.value){ document.getElementById('geminiKey').value = k.value; }
+    }catch(e){}
+    try{
+      const m = await window.storage.get('mj-gemini-model');
+      if(m && m.value){ document.getElementById('geminiModel').value = m.value; }
+    }catch(e){}
+    render();
+  }
+  let autoUploadTimer = null;
+  function flashAutoUploadStatus(ok){
+    setSyncStatus(ok ? '已自動上傳✓' : '自動上傳失敗', ok);
+    clearTimeout(autoUploadTimer);
+    autoUploadTimer = setTimeout(()=>{ setSyncStatus('已連接', true); }, 2000);
+  }
+  async function saveSettings(){
+    try{ await window.storage.set('mj-settings', JSON.stringify(state)); }catch(e){}
+    if(state.sheetUrl){ sheetSet('mj-settings', JSON.stringify(state)).then(flashAutoUploadStatus); }
+  }
+  async function saveGame(){
+    try{ await window.storage.set('mj-game', JSON.stringify(game)); }catch(e){}
+    if(state.sheetUrl){ sheetSet('mj-game', JSON.stringify(game)).then(flashAutoUploadStatus); }
+  }
+
+  // ---------- fan calc ----------
+  function totalFan(){
+    let t = 0;
+    state.fanItems.forEach(it=>{ if(state.checked[it.id]) t += Number(it.val)||0; });
+    t += (state.zhengCount||0) * (Number(state.zhengVal)||0);
+    if((state.zhengCount||0)===0){ t += Number(state.noFlowerVal)||0; }
+    if(state.menfengChecked) t += Number(state.menfengVal)||0;
+    if(state.quanfengChecked) t += Number(state.quanfengVal)||0;
+    const sanyuanN = ['Zh','Fa','Bai'].filter(k=>state.sanyuanChecked && state.sanyuanChecked[k]).length;
+    t += sanyuanN * (Number(state.sanyuanVal)||0);
+    state.customs.forEach(c=> t += Number(c.val)||0);
+    return t;
+  }
+  function fanToUnits(fan){
+    // 全銃制：呢個值係「出銃者實付」嘅金額（未計莊家雙倍）；已鎖死8番封頂
+    const capped = Math.min(fan, Number(state.maxFan)||fan);
+    if(capped < 0) return 0;
+    let best = state.fanTable[0];
+    state.fanTable.forEach(r=>{ if(r.fan<=capped && r.fan>=best.fan) best=r; });
+    return best.units;
+  }
+
+  function renderFanGroups(){
+    const cats = ['一番','三番','大番','巨番','爆棚'];
+    const wrap = document.getElementById('fanGroups');
+    wrap.innerHTML = cats.map(cat=>{
+      const items = state.fanItems.filter(i=>i.cat===cat);
+      if(!items.length) return '';
+      return `<div class="fan-group">
+        <div class="fan-group-label">${cat}</div>
+        <div class="fan-grid">
+          ${items.map(it=>`
+            <div class="fan-item ${state.checked[it.id]?'checked':''}" data-id="${it.id}">
+              <span class="name">${it.name}</span>
+              <span class="val" data-editval="${it.id}">${it.val}</span>
+            </div>`).join('')}
+        </div>
+      </div>`;
+    }).join('');
+    wrap.querySelectorAll('.fan-item').forEach(el=>{
+      el.addEventListener('click', (e)=>{
+        if(e.target.dataset.editval) return;
+        const id = el.dataset.id;
+        state.checked[id] = !state.checked[id];
+        saveSettings();
+        renderFanGroups(); renderTotals();
+      });
+    });
+    wrap.querySelectorAll('[data-editval]').forEach(el=>{
+      el.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const id = el.dataset.editval;
+        const item = state.fanItems.find(i=>i.id===id);
+        const nv = prompt(`「${item.name}」嘅番数：`, item.val);
+        if(nv!==null && !isNaN(nv)){ item.val = Number(nv); saveSettings(); renderFanGroups(); renderTotals(); }
+      });
+    });
+  }
+
+  function renderCalcSeatUI(){
+    const compassNames = ['東','南','西','北'];
+    const wrap = document.getElementById('calcSeatPills');
+    const active = activeIndices();
+    if(!active.includes(state.calcSeat)){
+      state.calcSeat = active[0];
+      saveSettings();
+    }
+    wrap.innerHTML = active.map(i=>
+      `<button class="pill ${state.calcSeat===i?'active':''}" data-calcseat="${i}">${game.players[i]}(${compassNames[i]})</button>`
+    ).join('');
+    wrap.querySelectorAll('[data-calcseat]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        state.calcSeat = Number(b.dataset.calcseat);
+        saveSettings(); renderCalcSeatUI(); renderTotals();
+      });
+    });
+    const seatWind = compassNames[state.calcSeat];
+    const windNames = active.map(i=>compassNames[i]);
+    const roundWind = windNames[game.roundWindIndex % windNames.length];
+    document.getElementById('calcSeatInfo').textContent = `${game.players[state.calcSeat]} 嘅門風係「${seatWind}」，依家係「${roundWind}圈」。`;
+    document.getElementById('menfengLabel').textContent = `門風刻（${seatWind}）`;
+    document.getElementById('quanfengLabel').textContent = `圈風刻（${roundWind}）`;
+    document.querySelector('[data-id="__menfeng"]').classList.toggle('checked', state.menfengChecked);
+    document.querySelector('[data-id="__quanfeng"]').classList.toggle('checked', state.quanfengChecked);
+    document.querySelector('[data-editval="menfengVal"]').textContent = state.menfengVal;
+    document.querySelector('[data-editval="quanfengVal"]').textContent = state.quanfengVal;
+  }
+
+  function renderFlowerSteppers(){
+    document.getElementById('zhengCount').textContent = state.zhengCount;
+    document.getElementById('zhengValDisp').textContent = state.zhengVal;
+    ['Zh','Fa','Bai'].forEach(k=>{
+      const el = document.querySelector(`[data-sanyuan="${k}"]`);
+      if(el) el.classList.toggle('checked', !!(state.sanyuanChecked && state.sanyuanChecked[k]));
+    });
+    const n = ['Zh','Fa','Bai'].filter(k=>state.sanyuanChecked && state.sanyuanChecked[k]).length;
+    document.getElementById('sanyuanValNote').textContent = n>0
+      ? `每副 ${state.sanyuanVal}番 → 已選 ${n} 副，共 +${n*state.sanyuanVal}番（撳呢度可以改番数）`
+      : `每副 ${state.sanyuanVal}番（撳呢度可以改）`;
+    const noFlower = (state.zhengCount||0)===0;
+    const noteEl = document.getElementById('noFlowerNote');
+    noteEl.classList.toggle('checked', noFlower);
+    noteEl.querySelector('[data-editval="noFlowerVal"]').textContent = state.noFlowerVal;
+  }
+
+  function renderCustoms(){
+    const wrap = document.getElementById('customList');
+    wrap.innerHTML = state.customs.map((c,idx)=>`
+      <div class="fan-item checked" data-idx="${idx}">
+        <span class="name">${c.name}</span>
+        <span class="val">${c.val}</span>
+        <button class="del-x" data-del="${idx}">✕</button>
+      </div>`).join('');
+    wrap.querySelectorAll('[data-del]').forEach(b=>{
+      b.addEventListener('click',(e)=>{
+        e.stopPropagation();
+        state.customs.splice(Number(b.dataset.del),1);
+        saveSettings(); renderCustoms(); renderTotals();
+      });
+    });
+  }
+
+  function renderFanTable(){
+    const wrap = document.getElementById('fanTableGrid');
+    const locked = state.fanTableLocked;
+    const minF = Number(state.minFan)||0;
+    const maxF = Number(state.maxFan)||13;
+    const rows = state.fanTable.filter(r => r.fan>=minF && r.fan<=maxF);
+    wrap.innerHTML = rows.map((r)=>{
+      const idx = state.fanTable.indexOf(r);
+      return `<div style="background:${locked?'#E9ECF5':'#fff'};border:1.5px solid var(--ivory-dim);border-radius:9px;padding:12px 6px;text-align:center;">
+        <div style="font-size:13px;color:#7686A8;margin-bottom:4px;">${r.fan}番</div>
+        <input type="number" data-tblidx="${idx}" value="${r.units}" ${locked?'readonly':''} style="width:100%;padding:4px;text-align:center;font-size:20px;font-family:'IBM Plex Mono';font-weight:700;${locked?'color:#7686A8;background:transparent;border:none;':''}">
+      </div>`;
+    }).join('');
+    if(locked) return;
+    wrap.querySelectorAll('[data-tblidx]').forEach(inp=>{
+      inp.addEventListener('change', ()=>{
+        state.fanTable[Number(inp.dataset.tblidx)].units = Number(inp.value)||0;
+        saveSettings(); renderTotals();
+      });
+    });
+  }
+
+  function renderTotals(){
+    const fan = totalFan();
+    document.getElementById('totFan').textContent = fan;
+    const belowMin = fan < Number(state.minFan) && !state.allowJi;
+    const warnEl = document.getElementById('fanWarn');
+    let chongAmt = 0;
+    if(belowMin){
+      warnEl.style.display='block';
+      warnEl.textContent = `未夠 ${state.minFan} 番，未食得糊。`;
+      chongAmt = 0;
+    } else if(fan > Number(state.maxFan)){
+      warnEl.style.display='block';
+      warnEl.textContent = `已封頂：${fan}番以 ${state.maxFan}番 計錢。`;
+      chongAmt = fanToUnits(fan);
+    } else {
+      warnEl.style.display='none';
+      chongAmt = fanToUnits(fan);
+    }
+    document.getElementById('totUnits').textContent = `${fanToUnits(fan)} (出銃基數)`;
+    const zimoEach = chongAmt / 2;
+    document.getElementById('previewZimo').textContent = `$${zimoEach}`;
+    document.getElementById('previewChong').textContent = `$${chongAmt}`;
+    document.getElementById('applyToGameBtn').disabled = belowMin;
+    // sync round fan input default
+    const rf = document.getElementById('roundFan');
+    if(document.activeElement !== rf){ rf.value = fan; }
+    updateRoundPreview();
+  }
+
+  // ---------- game tab ----------
+  function scoreOf(idx){
+    let s = 0;
+    game.rounds.forEach(r=>{
+      if(r.isDraw) return;
+      r.deltas.forEach((d,i)=>{ if(i===idx) s+=d; });
+    });
+    return s;
+  }
+
+  function renderPlayers(){
+    const wrap = document.getElementById('playersGrid');
+    const areaClasses = ['pos-east','pos-south','pos-west','pos-north'];
+    const compassNames = ['東','南','西','北'];
+    const active = activeIndices();
+    const windNames = active.map(i=>compassNames[i]);
+    const cards = [0,1,2,3].map(i=>{
+      if(i === game.emptySeat){
+        return `<div class="player-card ${areaClasses[i]} is-empty">
+          <div class="empty-label">${compassNames[i]}位</div>
+          <div class="empty-sub">得閒</div>
+        </div>`;
+      }
+      const sc = scoreOf(i);
+      const cls = sc>0?'pos':sc<0?'neg':'zero';
+      const gameStarted = game.rounds.length > 0;
+      const canMarkEmpty = game.emptySeat !== null && !gameStarted;
+      return `<div class="player-card ${areaClasses[i]}">
+        ${i===game.dealerIndex?'<div class="dealer-badge">莊</div>':''}
+        <input type="text" data-pidx="${i}" value="${game.players[i]}">
+        <div class="score ${cls}">${sc>0?'+':''}${sc}</div>
+        ${(i!==game.dealerIndex && !gameStarted)?`<button class="set-dealer" data-setdealer="${i}">設為莊家</button>`:''}
+        ${canMarkEmpty?`<button class="set-empty" data-setempty="${i}">設為得閒位</button>`:''}
+      </div>`;
+    }).join('');
+    const centerHtml = `<div class="table-center">
+      <svg class="turn-arrow" viewBox="0 0 100 100">
+        <path d="M50,12 A38,38 0 1,0 82,38" fill="none" stroke="#5B6FE0" stroke-width="13" stroke-linecap="round"/>
+        <polygon points="78,33 91,40 76,49" fill="#5B6FE0"/>
+      </svg>
+      <div class="center-char">${windNames[game.roundWindIndex % windNames.length]}</div>
+    </div>`;
+    wrap.innerHTML = cards + centerHtml;
+    const lockNote = document.getElementById('lockSeatNote');
+    if(lockNote){
+      lockNote.textContent = (game.rounds.length>0)
+        ? '對局已經開始，莊位／得閒位鎖死唔畀改（開局時預設東位做莊）。'
+        : '未開局之前可以自由揀莊位同得閒位，一開波就會鎖死。';
+    }
+    wrap.querySelectorAll('[data-pidx]').forEach(inp=>{
+      inp.addEventListener('change', ()=>{
+        game.players[Number(inp.dataset.pidx)] = inp.value || `玩家${Number(inp.dataset.pidx)+1}`;
+        saveGame(); renderWinnerPills(); renderHistory();
+      });
+    });
+    wrap.querySelectorAll('[data-setdealer]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        game.dealerIndex = Number(b.dataset.setdealer);
+        saveGame(); renderPlayers();
+      });
+    });
+    wrap.querySelectorAll('[data-setempty]').forEach(b=>{
+      b.addEventListener('click', ()=> setEmptySeat(Number(b.dataset.setempty)));
+    });
+  }
+
+  function setEmptySeat(i){
+    if(game.emptySeat === i) return;
+    game.emptySeat = i;
+    if(game.dealerIndex === i){ game.dealerIndex = nextActiveIndex(i); }
+    const active = activeIndices();
+    if(roundWinner === i || !active.includes(roundWinner)){ roundWinner = active[0]; }
+    if(roundDiscarder === i){ roundDiscarder = null; }
+    saveGame(); renderAll();
+  }
+
+  function renderWinnerPills(){
+    const wrap = document.getElementById('winnerPills');
+    const active = activeIndices();
+    wrap.innerHTML = active.map(i=>
+      `<button class="pill ${roundWinner===i?'active':''}" data-winner="${i}">${game.players[i]}</button>`
+    ).join('');
+    wrap.querySelectorAll('[data-winner]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        roundWinner = Number(b.dataset.winner);
+        if(roundDiscarder===roundWinner) roundDiscarder=null;
+        renderWinnerPills(); renderDiscarderPills(); updateRoundPreview();
+      });
+    });
+    renderDiscarderPills();
+  }
+
+  function renderDiscarderPills(){
+    const wrap = document.getElementById('discarderPills');
+    const others = activeIndices().filter(i=>i!==roundWinner);
+    wrap.innerHTML = others.map(i=>
+      `<button class="pill ${roundDiscarder===i?'active':''}" data-disc="${i}">${game.players[i]}</button>`
+    ).join('');
+    wrap.querySelectorAll('[data-disc]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        roundDiscarder = Number(b.dataset.disc);
+        renderDiscarderPills(); updateRoundPreview();
+      });
+    });
+  }
+
+  function updateRoundPreview(){
+    const fan = Number(document.getElementById('roundFan').value)||0;
+    const chongAmt = fanToUnits(fan);
+    const zimoEachBase = chongAmt / 2;
+    const dealerOn = state.dealerDouble;
+    const dealerName = game.players[game.dealerIndex];
+    if(roundMode==='zimo'){
+      const parts = [];
+      activeIndices().forEach(i=>{
+        if(i===roundWinner) return;
+        let pay = zimoEachBase;
+        const doubled = dealerOn && (i===game.dealerIndex || roundWinner===game.dealerIndex);
+        if(doubled) pay *= 2;
+        parts.push(`${game.players[i]} $${pay}${doubled?'(莊)':''}`);
+      });
+      document.getElementById('roundUnitsPreview').textContent = `= 自摸：${parts.join('、')}`;
+    } else {
+      if(roundDiscarder===null){
+        document.getElementById('roundUnitsPreview').textContent = `= 出銃一人付 $${chongAmt}（未揀邊個出銃）`;
+      } else {
+        let pay = chongAmt;
+        const doubled = dealerOn && (roundDiscarder===game.dealerIndex || roundWinner===game.dealerIndex);
+        if(doubled) pay *= 2;
+        document.getElementById('roundUnitsPreview').textContent = `= 出銃一人付 $${pay}${doubled?`（莊家(${dealerName})雙倍）`:''}`;
+      }
+    }
+  }
+
+  function computeDeltas(winner, mode, discarder, fan){
+    const chongAmt = fanToUnits(fan);
+    const zimoEachBase = chongAmt / 2;
+    const deltas = [0,0,0,0];
+    const dealerOn = state.dealerDouble;
+    if(mode==='zimo'){
+      let totalIn = 0;
+      activeIndices().forEach(i=>{
+        if(i===winner) return;
+        let pay = zimoEachBase;
+        if(dealerOn && (i===game.dealerIndex || winner===game.dealerIndex)) pay *= 2;
+        deltas[i] -= pay;
+        totalIn += pay;
+      });
+      deltas[winner] += totalIn;
+    } else { // chong
+      let pay = chongAmt;
+      if(dealerOn && (discarder===game.dealerIndex || winner===game.dealerIndex)) pay *= 2;
+      deltas[discarder] -= pay;
+      deltas[winner] += pay;
+    }
+    return {deltas, units: fanToUnits(fan), amountTotal: deltas[winner]};
+  }
+
+  function renderHistory(){
+    const wrap = document.getElementById('historyList');
+    document.getElementById('roundCountTag').textContent = `${game.rounds.length} 鋪`;
+    if(!game.rounds.length){
+      wrap.innerHTML = '<div class="empty-hint">未有記錄，開波啦！</div>';
+      return;
+    }
+    wrap.innerHTML = game.rounds.slice().reverse().map((r,ridx)=>{
+      const realIdx = game.rounds.length-1-ridx;
+      if(r.isDraw){
+        return `<div class="history-item draw">
+          <div class="badge">流局</div>
+          <div class="info"><b>第 ${realIdx+1} 鋪</b> · 流局，莊家連任</div>
+          <button class="del" data-delround="${realIdx}">✕</button>
+        </div>`;
+      }
+      const modeTxt = r.mode==='zimo' ? '自摸' : `出銃（${game.players[r.discarder]}）`;
+      return `<div class="history-item">
+        <div class="badge">${r.fan}番</div>
+        <div class="info"><b>${game.players[r.winner]}</b> 食糊 · ${modeTxt} · 出銃基數$${r.units}${r.dealerWasDealer?' · 莊':''}</div>
+        <div class="amt">+$${r.amountTotal}</div>
+        <button class="del" data-delround="${realIdx}">✕</button>
+      </div>`;
+    }).join('');
+    wrap.querySelectorAll('[data-delround]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        if(confirm('刪除呢一鋪記錄？')){
+          game.rounds.splice(Number(b.dataset.delround),1);
+          saveGame(); renderAll();
+        }
+      });
+    });
+  }
+
+  function renderAll(){ renderPlayers(); renderWinnerPills(); renderHistory(); renderCalcSeatUI(); renderHandHistory(); }
+
+  function render(){
+    renderFanGroups(); renderCalcSeatUI(); renderFlowerSteppers(); renderCustoms(); renderFanTable(); renderTotals();
+    renderManualPalette(); renderManualTileDisplay();
+    const n = game.emptySeat===null ? 4 : 3;
+    document.getElementById('playerCountTag').textContent = n+'人';
+    document.querySelectorAll('[data-pcount]').forEach(b=> b.classList.toggle('active', Number(b.dataset.pcount)===n));
+    renderAll();
+  }
+
+  // ---------- events: tabs ----------
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // settings（minFan／maxFan／allowJi／dealerDouble 已鎖死，只顯示，唔綁change事件）
+
+  // 正花 stepper
+  document.querySelectorAll('[data-fstep]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const key = 'zhengCount';
+      const d = Number(b.dataset.dir);
+      state[key] = Math.max(0, (state[key]||0)+d);
+      saveSettings(); renderFlowerSteppers(); renderTotals();
+    });
+  });
+  // 正花／門風／圈風／無花 數值編輯
+  document.querySelectorAll('[data-editval="zhengVal"],[data-editval="menfengVal"],[data-editval="quanfengVal"],[data-editval="noFlowerVal"]').forEach(el=>{
+    el.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const key = el.dataset.editval;
+      const label = {zhengVal:'正花',menfengVal:'門風刻',quanfengVal:'圈風刻',noFlowerVal:'無花'}[key];
+      const nv = prompt(`「${label}」嘅番数：`, state[key]);
+      if(nv!==null && !isNaN(nv)){ state[key]=Number(nv); saveSettings(); renderFlowerSteppers(); renderCalcSeatUI(); renderTotals(); }
+    });
+  });
+  // 三元牌（中發白）數值編輯
+  document.getElementById('sanyuanValNote').addEventListener('click', ()=>{
+    const nv = prompt('「三元牌刻」每副嘅番数：', state.sanyuanVal);
+    if(nv!==null && !isNaN(nv)){ state.sanyuanVal=Number(nv); saveSettings(); renderFlowerSteppers(); renderTotals(); }
+  });
+  // 三元牌（中發白）撳格切換
+  document.querySelectorAll('[data-sanyuan]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const k = el.dataset.sanyuan;
+      if(!state.sanyuanChecked) state.sanyuanChecked = {Zh:false,Fa:false,Bai:false};
+      state.sanyuanChecked[k] = !state.sanyuanChecked[k];
+      saveSettings(); renderFlowerSteppers(); renderTotals();
+    });
+  });
+  // 門風刻／圈風刻 撳格切換
+  document.querySelector('[data-id="__menfeng"]').addEventListener('click', ()=>{
+    state.menfengChecked = !state.menfengChecked;
+    saveSettings(); renderCalcSeatUI(); renderTotals();
+  });
+  document.querySelector('[data-id="__quanfeng"]').addEventListener('click', ()=>{
+    state.quanfengChecked = !state.quanfengChecked;
+    saveSettings(); renderCalcSeatUI(); renderTotals();
+  });
+
+  // custom add
+  document.getElementById('addCustomBtn').addEventListener('click', ()=>{
+    const name = document.getElementById('customName').value.trim();
+    const val = Number(document.getElementById('customVal').value)||0;
+    if(!name) return;
+    state.customs.push({name,val});
+    document.getElementById('customName').value='';
+    document.getElementById('customVal').value=1;
+    saveSettings(); renderCustoms(); renderTotals();
+  });
+
+  // ---------- 雲端同步 (Google Sheet) ----------
+  document.getElementById('sheetUrlInput').addEventListener('change', async (e)=>{
+    state.sheetUrl = e.target.value.trim();
+    try{ await window.storage.set('mj-sheet-url', state.sheetUrl); }catch(err){}
+    if(!state.sheetUrl){ setSyncStatus('未連接'); return; }
+    setSyncStatus('同步緊…');
+    const ok1 = await sheetSet('mj-settings', JSON.stringify(state));
+    const ok2 = await sheetSet('mj-game', JSON.stringify(game));
+    setSyncStatus(ok1&&ok2 ? '已連接並上載' : '連接失敗，check下網址啱唔啱', ok1&&ok2);
+  });
+  document.getElementById('syncNowBtn').addEventListener('click', async ()=>{
+    if(!state.sheetUrl){ setSyncStatus('請先貼入雲端網址', false); return; }
+    setSyncStatus('同步緊…');
+    const ok1 = await sheetSet('mj-settings', JSON.stringify(state));
+    const ok2 = await sheetSet('mj-game', JSON.stringify(game));
+    setSyncStatus(ok1&&ok2 ? '已同步' : '同步失敗，check下網址／網絡', ok1&&ok2);
+  });
+
+  // ---------- AI 影相辨牌 (Gemini) ----------
+  document.getElementById('geminiKey').addEventListener('change', e=>{
+    window.storage.set('mj-gemini-key', e.target.value).catch(()=>{});
+  });
+  document.getElementById('geminiModel').addEventListener('change', e=>{
+    window.storage.set('mj-gemini-model', e.target.value).catch(()=>{});
+  });
+
+  document.getElementById('choosePhotoBtn').addEventListener('click', ()=>{
+    document.getElementById('photoInput').click();
+  });
+
+  function applyAnalysisResult(result, extraNote){
+    aiResultData = result;
+    aiMatched = result.matchedFanIds.map(id=>{
+      const item = state.fanItems.find(i=>i.id===id);
+      return item ? {id:item.id, name:item.name, val:item.val} : null;
+    }).filter(Boolean);
+    aiZhengCount = result.zhengCount;
+    aiMenfeng = result.menfeng;
+    aiQuanfeng = result.quanfeng;
+    aiSanyuanTiles = result.sanyuanTiles || [];
+    aiZimo = false;
+    aiNotesText = [extraNote, result.notes].filter(Boolean).join('　');
+    renderAiSuggest();
+    renderHandVisual(result);
+  }
+
+  document.getElementById('manualClearBtn').addEventListener('click', ()=>{
+    manualTiles = []; manualFlowers = [];
+    renderManualTileDisplay();
+  });
+
+  document.getElementById('manualCalcBtn').addEventListener('click', ()=>{
+    const statusEl = document.getElementById('aiStatus');
+    if(manualTiles.length < 13){
+      statusEl.style.color = 'var(--vermilion)';
+      statusEl.textContent = `分析失敗：而家得 ${manualTiles.length} 隻牌，最少要揀13隻先計得。`;
+      return;
+    }
+    const result = analyzeHand(manualTiles, manualFlowers, state.calcSeat, currentRoundWindCode());
+    if(result.error){
+      statusEl.style.color = 'var(--vermilion)';
+      statusEl.textContent = '分析失敗：' + result.error;
+      return;
+    }
+    applyAnalysisResult(result, '（自己揀牌）');
+    statusEl.style.color = 'var(--jade)';
+    statusEl.textContent = '計算完成，睇下啱唔啱先套用。';
+  });
+
+  document.getElementById('photoInput').addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      const base64 = dataUrl.split(',')[1];
+      aiPhoto = {mimeType: file.type || 'image/jpeg', base64};
+      document.getElementById('photoName').textContent = file.name || '已揀相';
+      const img = document.getElementById('photoPreview');
+      img.src = dataUrl; img.style.display = 'block';
+      document.getElementById('analyzeBtn').disabled = false;
+      document.getElementById('aiResult').style.display = 'none';
+      document.getElementById('aiStatus').textContent = '';
+      aiMatched = []; aiZhengCount = 0; aiMenfeng = false; aiQuanfeng = false; aiSanyuanTiles = []; aiZimo = false; aiNotesText = ''; aiResultData = null;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('analyzeBtn').addEventListener('click', async ()=>{
+    const key = document.getElementById('geminiKey').value.trim();
+    const model = document.getElementById('geminiModel').value.trim() || 'gemini-3.1-flash-lite';
+    const statusEl = document.getElementById('aiStatus');
+    if(!key){ statusEl.textContent = '要先貼入你自己嘅 Gemini API Key 先用得㗎。'; statusEl.style.color = 'var(--vermilion)'; return; }
+    if(!aiPhoto){ statusEl.textContent = '揀張相先。'; return; }
+
+    const prompt = `你係麻雀相片嘅文字辨識員。張相入面係一手麻雀牌（食糊嘅一手，可能包括花牌）。你唔使判斷任何番種，淨係要將你見到嘅每一隻牌讀出嚟轉做代碼。
+
+數字牌：數字＋花色字母，萬＝m，筒＝p，索＝s。例如一萬="1m"，五筒="5p"，九索="9s"。
+風牌：東="E"，南="S"，西="W"，北="N"。
+三元牌：中="Zh"，發="Fa"，白="Bai"。
+花牌：直接用中文名，梅、蘭、菊、竹、春、夏、秋、冬，擺入「flowers」，唔好擺入「tiles」。
+
+請只回覆一個JSON物件，唔好加任何其他文字或Markdown符號，格式如下：
+{"tiles":["1m","1m","4m","5m","6m"],"flowers":["梅","秋"],"notes":"如果相入面有啲牌睇唔清楚或者疑似讀錯，要喺度講明邊隻"}`;
+
+    statusEl.style.color = '#6b7690';
+    statusEl.textContent = '讀緊張相嘅牌，等陣…';
+    document.getElementById('analyzeBtn').disabled = true;
+
+    try{
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          contents: [{ parts: [
+            {text: prompt},
+            {inline_data: {mime_type: aiPhoto.mimeType, data: aiPhoto.base64}}
+          ]}],
+          generationConfig: {responseMimeType: 'application/json'}
+        })
+      });
+      if(!resp.ok){
+        const errText = await resp.text();
+        throw new Error(`API 回應錯誤 (${resp.status})：${errText.slice(0,200)}`);
+      }
+      const data = await resp.json();
+      const textOut = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if(!textOut) throw new Error('AI 冇回覆內容，可能俾張相擋咗或者格式唔啱。');
+      let parsed;
+      try{ parsed = JSON.parse(textOut); }
+      catch(e){ throw new Error('AI 回覆格式唔係有效JSON，試多次或者換張清晰啲嘅相。'); }
+
+      const result = analyzeHand(parsed.tiles, parsed.flowers, state.calcSeat, currentRoundWindCode());
+      if(result.error){ throw new Error(result.error); }
+      applyAnalysisResult(result, parsed.notes);
+      statusEl.textContent = '讀牌完成，本地已自動判斷牌型，睇下啱唔啱先套用。';
+      statusEl.style.color = 'var(--jade)';
+    }catch(err){
+      statusEl.style.color = 'var(--vermilion)';
+      statusEl.textContent = '分析失敗：' + err.message;
+    }finally{
+      document.getElementById('analyzeBtn').disabled = false;
+    }
+  });
+
+  function renderAiSuggest(){
+    const wrap = document.getElementById('aiSuggestList');
+    const compassNames = ['東','南','西','北'];
+    const seatWind = compassNames[state.calcSeat];
+    const active = activeIndices();
+    const roundWind = active.map(i=>compassNames[i])[game.roundWindIndex % active.length];
+    const dragonNames = {Zh:'中',Fa:'發',Bai:'白'};
+    wrap.innerHTML = aiMatched.map((m,idx)=>`
+      <div class="fan-item checked" data-aidx="${idx}">
+        <span class="name">${m.name}</span>
+        <span class="val">${m.val}</span>
+        <button class="del-x" data-aidel="${idx}">✕</button>
+      </div>`).join('')
+      + (aiZhengCount>0?`<div class="fan-item checked"><span class="name">正花 x${aiZhengCount}</span><span class="val">${aiZhengCount*state.zhengVal}</span></div>`:'')
+      + (aiMenfeng?`<div class="fan-item checked"><span class="name">門風刻（${seatWind}）</span><span class="val">${state.menfengVal}</span><button class="del-x" data-aidelmenfeng>✕</button></div>`:'')
+      + (aiQuanfeng?`<div class="fan-item checked"><span class="name">圈風刻（${roundWind}）</span><span class="val">${state.quanfengVal}</span><button class="del-x" data-aidelquanfeng>✕</button></div>`:'')
+      + aiSanyuanTiles.map(k=>`<div class="fan-item checked"><span class="name">三元牌刻（${dragonNames[k]}）</span><span class="val">${state.sanyuanVal}</span><button class="del-x" data-aidelsanyuan="${k}">✕</button></div>`).join('')
+      + `<div class="fan-item ${aiZimo?'checked':''}" data-id="__aizimo"><span class="name">自摸（AI睇唔到，自己剔）</span><span class="val">1</span></div>`;
+    wrap.querySelectorAll('[data-aidel]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        aiMatched.splice(Number(b.dataset.aidel),1);
+        renderAiSuggest();
+      });
+    });
+    const delMen = wrap.querySelector('[data-aidelmenfeng]');
+    if(delMen) delMen.addEventListener('click', ()=>{ aiMenfeng=false; renderAiSuggest(); });
+    const delQuan = wrap.querySelector('[data-aidelquanfeng]');
+    if(delQuan) delQuan.addEventListener('click', ()=>{ aiQuanfeng=false; renderAiSuggest(); });
+    wrap.querySelectorAll('[data-aidelsanyuan]').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        aiSanyuanTiles = aiSanyuanTiles.filter(k=>k!==b.dataset.aidelsanyuan);
+        renderAiSuggest();
+      });
+    });
+    const zimoChip = wrap.querySelector('[data-id="__aizimo"]');
+    if(zimoChip) zimoChip.addEventListener('click', ()=>{ aiZimo = !aiZimo; renderAiSuggest(); });
+    document.getElementById('aiNotes').textContent = aiNotesText ? `AI：${aiNotesText}` : '';
+    document.getElementById('aiResult').style.display = 'block';
+    if(aiResultData) renderHandVisual(aiResultData);
+  }
+
+  document.getElementById('applyAiBtn').addEventListener('click', ()=>{
+    state.checked = {};
+    state.customs = [];
+    aiMatched.forEach(m=>{
+      if(m.id){ state.checked[m.id] = true; }
+      else { state.customs.push({name:m.name, val:m.val}); }
+    });
+    if(aiZimo){ state.checked['zimo1'] = true; }
+    state.zhengCount = aiZhengCount || 0;
+    state.menfengChecked = aiMenfeng;
+    state.quanfengChecked = aiQuanfeng;
+    state.sanyuanChecked = {Zh:aiSanyuanTiles.includes('Zh'), Fa:aiSanyuanTiles.includes('Fa'), Bai:aiSanyuanTiles.includes('Bai')};
+    saveSettings();
+    renderFanGroups(); renderCalcSeatUI(); renderFlowerSteppers(); renderCustoms(); renderTotals();
+    document.getElementById('aiStatus').textContent = '已套用去計番清單（正花已跟返你揀嘅座位自動分好，記得核對一下）。';
+    document.getElementById('aiStatus').style.color = 'var(--jade)';
+  });
+
+  // reset calc
+  document.getElementById('resetCalcBtn').addEventListener('click', ()=>{
+    state.checked = {}; state.zhengCount = 0; state.sanyuanChecked = {Zh:false,Fa:false,Bai:false};
+    state.menfengChecked = false; state.quanfengChecked = false; state.customs = [];
+    aiResultData = null;
+    saveSettings(); renderFanGroups(); renderCalcSeatUI(); renderFlowerSteppers(); renderCustoms(); renderTotals();
+  });
+
+  // apply to game
+  document.getElementById('applyToGameBtn').addEventListener('click', ()=>{
+    const fan = totalFan();
+    pendingHandSnapshot = buildCalcSnapshot();
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.querySelector('[data-tab="game"]').classList.add('active');
+    document.getElementById('game').classList.add('active');
+    document.getElementById('roundFan').value = fan;
+    updateRoundPreview();
+  });
+
+  // round mode pills
+  document.querySelectorAll('#winDetails .radio-pills [data-mode]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      roundMode = b.dataset.mode;
+      document.querySelectorAll('#winDetails .radio-pills [data-mode]').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      document.getElementById('discarderWrap').style.display = roundMode==='chong' ? 'block':'none';
+      updateRoundPreview();
+    });
+  });
+
+  document.getElementById('roundFan').addEventListener('input', updateRoundPreview);
+
+  // submit round
+  document.getElementById('submitRoundBtn').addEventListener('click', ()=>{
+    const fan = Number(document.getElementById('roundFan').value)||0;
+    if(roundMode==='chong' && roundDiscarder===null){ alert('請揀邊個出銃'); return; }
+    const {deltas, units, amountTotal} = computeDeltas(roundWinner, roundMode, roundDiscarder, fan);
+    const handSnapshot = (pendingHandSnapshot && pendingHandSnapshot.totalFan===fan) ? pendingHandSnapshot : null;
+    game.rounds.push({
+      winner: roundWinner, mode: roundMode, discarder: roundDiscarder,
+      fan, units, deltas, amountTotal,
+      dealerWasDealer: roundWinner===game.dealerIndex,
+      handSnapshot,
+      ts: Date.now()
+    });
+    pendingHandSnapshot = null;
+    if(roundWinner !== game.dealerIndex){
+      const active = activeIndices();
+      const wasLastSeat = active[active.length-1] === game.dealerIndex;
+      game.dealerIndex = nextActiveIndex(game.dealerIndex);
+      if(wasLastSeat){ game.roundWindIndex = (game.roundWindIndex+1)%active.length; }
+    }
+    saveGame(); renderAll();
+  });
+
+  // draw
+  document.getElementById('drawBtn').addEventListener('click', ()=>{
+    game.rounds.push({isDraw:true, deltas:[0,0,0,0], ts:Date.now()});
+    saveGame(); renderAll();
+  });
+
+  document.getElementById('clearRoundsBtn').addEventListener('click', ()=>{
+    if(confirm('清空所有對局記錄？（保留玩家名同莊家）')){
+      game.rounds = []; saveGame(); renderAll();
+    }
+  });
+  document.getElementById('resetAllBtn').addEventListener('click', ()=>{
+    if(confirm('全部重設，包括玩家名？')){
+      const keepEmpty = game.emptySeat;
+      game = {players:['東家','南家','西家','北家'], emptySeat:keepEmpty, dealerIndex:0, roundWindIndex:0, rounds:[]};
+      if(game.dealerIndex === game.emptySeat){ game.dealerIndex = nextActiveIndex(game.dealerIndex); }
+      roundWinner = activeIndices()[0]; roundDiscarder=null;
+      saveGame(); renderAll();
+    }
+  });
+
+  // player count toggle (3人 / 4人麻雀)
+  function setPlayerCount(n){
+    const currentlyN = game.emptySeat===null ? 4 : 3;
+    if(currentlyN===n) return;
+    if(game.rounds.length && !confirm('轉換人數會清空目前嘅對局記錄，繼續？')) return;
+    game.rounds = [];
+    game.roundWindIndex = 0;
+    game.emptySeat = (n===4) ? null : (game.emptySeat===null ? 3 : game.emptySeat);
+    const active = activeIndices();
+    if(!active.includes(game.dealerIndex)) game.dealerIndex = active[0];
+    roundWinner = active[0];
+    roundDiscarder = null;
+    document.getElementById('playerCountTag').textContent = n+'人';
+    document.querySelectorAll('[data-pcount]').forEach(b=> b.classList.toggle('active', Number(b.dataset.pcount)===n));
+    saveGame(); renderAll();
+  }
+  document.querySelectorAll('[data-pcount]').forEach(b=>{
+    b.addEventListener('click', ()=> setPlayerCount(Number(b.dataset.pcount)));
+  });
+
+  // ---------- 匯出PDF牌局記錄 ----------
+  function loadScriptOnce(src){
+    return new Promise((resolve, reject)=>{
+      const existing = document.querySelector(`script[data-src="${src}"]`);
+      if(existing){ existing.addEventListener('load', resolve); if(existing.dataset.loaded) resolve(); return; }
+      const s = document.createElement('script');
+      s.src = src; s.dataset.src = src;
+      s.onload = ()=>{ s.dataset.loaded = '1'; resolve(); };
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  function buildPdfReportHtml(){
+    const compassNames = ['東','南','西','北'];
+    const active = activeIndices();
+    const now = new Date();
+    const dateStr = now.toLocaleString('zh-HK',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+
+    // 排名：分數由高到低
+    const ranking = active.map(i=>({i, name:game.players[i], score:scoreOf(i)})).sort((a,b)=>b.score-a.score);
+    const scoreRows = ranking.map((r,idx)=>{
+      const color = r.score>0?'#2E9E7C':r.score<0?'#E0507A':'#666';
+      const medal = idx===0?'🥇':idx===1?'🥈':idx===2?'🥉':'';
+      return `<tr>
+        <td style="padding:8px 10px;border-bottom:1px solid #eee;font-size:14px;">${medal} 第${idx+1}名</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #eee;font-weight:700;font-size:15px;">${r.name}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #eee;text-align:right;font-weight:800;font-size:16px;color:${color};font-family:'IBM Plex Mono',monospace;">${r.score>0?'+':''}${r.score}</td>
+      </tr>`;
+    }).join('');
+
+    const winRounds = game.rounds.filter(r=>!r.isDraw);
+    const handRows = winRounds.map((r,idx)=>{
+      const dt = r.ts ? new Date(r.ts).toLocaleString('zh-HK',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+      let visual = '';
+      if(r.handSnapshot && (r.handSnapshot.sets || (r.handSnapshot.tiles&&r.handSnapshot.tiles.length))){
+        visual = `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;">${buildHandVisualHtml(r.handSnapshot)}</div>`;
+      } else if(r.handSnapshot && r.handSnapshot.fanNames && r.handSnapshot.fanNames.length){
+        visual = `<div style="margin-top:6px;font-size:12px;color:#555;">${r.handSnapshot.fanNames.join('、')}</div>`;
+      }
+      return `<div style="padding:12px 0;border-bottom:1px solid #eee;">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">
+          <span><b style="font-size:14px;">第${idx+1}鋪</b>　${game.players[r.winner]} 食糊　·　${r.fan}番　·　${r.mode==='zimo'?'自摸':'出銃'}</span>
+          <span style="color:#2E9E7C;font-weight:800;font-family:'IBM Plex Mono',monospace;">+$${r.amountTotal}</span>
+        </div>
+        <div style="font-size:11px;color:#999;margin-top:2px;">${dt}</div>
+        ${visual}
+      </div>`;
+    }).join('') || '<p style="color:#999;">未有食糊記錄</p>';
+
+    return `
+      <div style="text-align:center;border-bottom:3px solid #5B6FE0;padding-bottom:16px;margin-bottom:20px;">
+        <div style="font-size:26px;font-weight:900;color:#2E3B55;">港式麻雀 對局記錄</div>
+        <div style="font-size:12px;color:#888;margin-top:4px;">匯出時間：${dateStr}</div>
+      </div>
+      <div style="font-size:17px;font-weight:800;color:#2E3B55;margin-bottom:8px;">🏆 最終戰績</div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">${scoreRows}</table>
+      <div style="font-size:17px;font-weight:800;color:#2E3B55;margin-bottom:8px;">🀄 牌型記錄（共${winRounds.length}鋪食糊）</div>
+      ${handRows}
+      <div style="text-align:center;margin-top:24px;font-size:11px;color:#bbb;">由港式麻雀計數枱自動產生</div>
+    `;
+  }
+
+  document.getElementById('exportPdfBtn').addEventListener('click', async ()=>{
+    const statusEl = document.getElementById('pdfExportStatus');
+    statusEl.style.color = 'var(--text-dim)';
+    statusEl.textContent = '準備緊PDF，等陣…';
+    try{
+      if(!window.jspdf){ await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'); }
+      if(!window.html2canvas){ await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'); }
+
+      const reportEl = document.getElementById('pdfReportContent');
+      reportEl.innerHTML = buildPdfReportHtml();
+
+      const canvas = await window.html2canvas(reportEl, {scale:2, backgroundColor:'#ffffff', useCORS:true});
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF('p','pt','a4');
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const imgW = pageW;
+      const imgH = canvas.height * (imgW / canvas.width);
+      let heightLeft = imgH;
+      let position = 0;
+      const imgData = canvas.toDataURL('image/png');
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgW, imgH);
+      heightLeft -= pageH;
+      while(heightLeft > 0){
+        position = heightLeft - imgH;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgW, imgH);
+        heightLeft -= pageH;
+      }
+
+      const fname = `麻雀對局記錄-${new Date().toISOString().slice(0,10)}.pdf`;
+      pdf.save(fname);
+      statusEl.style.color = 'var(--jade)';
+      statusEl.textContent = 'PDF已匯出！';
+    }catch(err){
+      statusEl.style.color = 'var(--vermilion)';
+      statusEl.textContent = '匯出失敗：' + err.message + '（可能需要網絡去載入PDF工具）';
+    }
+  });
+
+  loadAll();
+})();
+</script>
+</body>
+</html>
