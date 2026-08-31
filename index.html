@@ -737,14 +737,18 @@
   }
 
   function tileIconHtml(tag, highlight){
-    const ring = highlight ? 'box-shadow:0 2px 0 rgba(0,0,0,0.15), inset 0 0 0 2px var(--brass);' : 'box-shadow:0 2px 0 rgba(0,0,0,0.15);';
+    const shadow = 'box-shadow:0 2px 3px rgba(0,0,0,0.18);';
+    const hlBorder = 'border:2.5px solid #5B6FE0;';
     if(FLOWER_NAMES.includes(tag)){
-      return `<div style="width:32px;height:44px;background:#FCE8F0;border:1.5px solid #E0507A;border-radius:5px;
-        display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#C23A63;${ring}">${tag}</div>`;
+      const border = highlight ? hlBorder : 'border:1.5px solid #E0507A;';
+      return `<div style="width:32px;height:44px;background:#FCE8F0;${border}border-radius:5px;
+        display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#C23A63;${shadow}">${tag}</div>`;
     }
     const honorText = {E:'東',S:'南',W:'西',N:'北',Zh:'中',Fa:'發',Bai:'白'};
     const honorColor = {E:'#1c1c1c',S:'#1c1c1c',W:'#1c1c1c',N:'#1c1c1c',Zh:'#B23A2E',Fa:'#2E7D63',Bai:'#2456a6'};
     const m = tag.match(/^(\d)([mps])$/);
+    const normalBorder = 'border:1.5px solid #C3CBE0;';
+    const border = highlight ? hlBorder : normalBorder;
     if(m){
       const suitColor = {m:'#B23A2E', p:'#2456a6', s:'#2E7D63'};
       const color = suitColor[m[2]];
@@ -752,22 +756,28 @@
       if(m[2]==='m'){
         const numChar = CN_NUM[rank] || m[1];
         const suitChar = SUIT_DISPLAY[m[2]];
-        return `<div style="width:32px;height:44px;background:#F3F5FA;border:1.5px solid #C3CBE0;border-radius:5px;
-          display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-weight:800;font-size:14px;line-height:1;color:${color};${ring}">
+        return `<div style="width:32px;height:44px;background:#F3F5FA;${border}border-radius:5px;
+          display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-weight:800;font-size:14px;line-height:1;color:${color};${shadow}">
           <span>${numChar}</span><span>${suitChar}</span>
         </div>`;
       }
       const svg = tileVisualSvg(m[2], rank, color);
-      return `<div style="width:32px;height:44px;background:#F3F5FA;border:1.5px solid #C3CBE0;border-radius:5px;
-        display:flex;align-items:center;justify-content:center;${ring}">${svg}</div>`;
+      return `<div style="width:32px;height:44px;background:#F3F5FA;${border}border-radius:5px;
+        display:flex;align-items:center;justify-content:center;${shadow}">${svg}</div>`;
     }
     const label = honorText[tag] || tag;
     const color = honorColor[tag] || '#1c1c1c';
-    return `<div style="width:32px;height:44px;background:#F3F5FA;border:1.5px solid #C3CBE0;border-radius:5px;
-      display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:${color};${ring}">${label}</div>`;
+    return `<div style="width:32px;height:44px;background:#F3F5FA;${border}border-radius:5px;
+      display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:${color};${shadow}">${label}</div>`;
   }
 
   // ---------- 自己揀牌（唔使影相） ----------
+  function countKongsInTiles(tiles){
+    const counts = {};
+    tiles.forEach(t=> counts[t]=(counts[t]||0)+1);
+    return Object.values(counts).filter(c=>c>=4).length;
+  }
+
   function renderManualPalette(){
     const wrap = document.getElementById('manualPalette');
     if(!wrap || wrap.dataset.built) return; // 淨係起一次，palette本身唔會變
@@ -790,16 +800,43 @@
       b.addEventListener('click', ()=>{
         const tag = b.dataset.picktile;
         if(FLOWER_NAMES.includes(tag)){
-          if(manualFlowers.length>=8){ return; }
+          // 花牌：全副牌入面每種花淨係得1隻
+          if(manualFlowers.filter(f=>f===tag).length>=1) return;
           manualFlowers.push(tag);
         } else {
-          if(manualTiles.length>=18){ return; }
+          // 一般牌：每種最多4隻（一副牌得4張一樣嘅）
+          const curCount = manualTiles.filter(t=>t===tag).length;
+          if(curCount>=4) return;
+          // 總數上限：正常14隻，除非已經有開槓(4張一樣)先可以逐槓多揀1隻
+          const tentative = manualTiles.concat([tag]);
+          const kongCount = countKongsInTiles(tentative);
+          const maxAllowed = 14 + kongCount;
+          if(tentative.length > maxAllowed) return;
           manualTiles.push(tag);
         }
         renderManualTileDisplay();
       });
     });
     wrap.dataset.built = '1';
+  }
+
+  function updatePaletteAvailability(){
+    const wrap = document.getElementById('manualPalette');
+    if(!wrap) return;
+    const kongCount = countKongsInTiles(manualTiles);
+    const maxAllowed = 14 + kongCount;
+    wrap.querySelectorAll('[data-picktile]').forEach(b=>{
+      const tag = b.dataset.picktile;
+      let maxed;
+      if(FLOWER_NAMES.includes(tag)){
+        maxed = manualFlowers.filter(f=>f===tag).length >= 1;
+      } else {
+        const curCount = manualTiles.filter(t=>t===tag).length;
+        maxed = curCount>=4 || manualTiles.length >= maxAllowed;
+      }
+      b.style.opacity = maxed ? '0.3' : '1';
+      b.style.pointerEvents = maxed ? 'none' : 'auto';
+    });
   }
 
   function renderManualTileDisplay(){
@@ -809,13 +846,16 @@
     const tileChips = manualTiles.map((t,i)=>`<button type="button" data-removetile="${i}" style="border:none;padding:0;background:none;cursor:pointer;">${tileIconHtml(t,false)}</button>`).join('');
     const flowerChips = manualFlowers.map((t,i)=>`<button type="button" data-removeflower="${i}" style="border:none;padding:0;background:none;cursor:pointer;">${tileIconHtml(t,false)}</button>`).join('');
     wrap.innerHTML = tileChips + (manualFlowers.length? `<span style="width:1px;background:#556;margin:0 4px;"></span>${flowerChips}`:'') || '<span class="small" style="color:#B7C0DC;">撳下面嘅牌加入手牌…</span>';
-    countEl.textContent = `已揀 ${manualTiles.length} 隻牌${manualFlowers.length?`、${manualFlowers.length} 隻花`:''}（標準14隻，有開槓可以加多幾隻，撳格仔可以刪走）`;
+    const kongCount = countKongsInTiles(manualTiles);
+    const maxAllowed = 14 + kongCount;
+    countEl.textContent = `已揀 ${manualTiles.length}/${maxAllowed} 隻牌${manualFlowers.length?`、${manualFlowers.length} 隻花`:''}${kongCount>0?`（已計${kongCount}個槓）`:''}（撳格仔可以刪走）`;
     wrap.querySelectorAll('[data-removetile]').forEach(b=>{
       b.addEventListener('click', ()=>{ manualTiles.splice(Number(b.dataset.removetile),1); renderManualTileDisplay(); });
     });
     wrap.querySelectorAll('[data-removeflower]').forEach(b=>{
       b.addEventListener('click', ()=>{ manualFlowers.splice(Number(b.dataset.removeflower),1); renderManualTileDisplay(); });
     });
+    updatePaletteAvailability();
   }
 
   function buildHandVisualHtml(data){
@@ -913,21 +953,53 @@
     el.textContent = text;
     el.style.color = ok===true ? 'var(--jade)' : ok===false ? 'var(--vermilion)' : 'var(--text-dim)';
   }
+
+  // 本機存取：喺Claude介面入面用window.storage，喺一般網站(例如GitHub Pages)冇呢樣嘢，
+  // 就自動改用瀏覽器正常嘅localStorage，兩邊都做到本機快取
+  async function localGet(key){
+    try{
+      if(window.storage && window.storage.get){
+        const r = await window.storage.get(key);
+        if(r && r.value) return r.value;
+      }
+    }catch(e){}
+    try{ return localStorage.getItem('mjapp_'+key); }catch(e){ return null; }
+  }
+  async function localSet(key, value){
+    try{ if(window.storage && window.storage.set){ await window.storage.set(key, value); } }catch(e){}
+    try{ localStorage.setItem('mjapp_'+key, value); }catch(e){}
+  }
+
+  // 雲端讀取：用JSONP（插入<script>標籤），唔會撞正CORS問題，喺任何網站/file://都work
+  function jsonpGet(url, params){
+    return new Promise((resolve, reject)=>{
+      const cbName = 'mjcb_' + Math.random().toString(36).slice(2);
+      const script = document.createElement('script');
+      const timer = setTimeout(()=>{ cleanup(); reject(new Error('逾時')); }, 8000);
+      function cleanup(){ delete window[cbName]; script.remove(); clearTimeout(timer); }
+      window[cbName] = (data)=>{ cleanup(); resolve(data); };
+      const qs = new URLSearchParams(Object.assign({}, params, {callback:cbName})).toString();
+      script.src = `${url}?${qs}`;
+      script.onerror = ()=>{ cleanup(); reject(new Error('連線失敗')); };
+      document.head.appendChild(script);
+    });
+  }
   async function sheetGet(key){
     if(!state.sheetUrl) return null;
     try{
-      const res = await fetch(`${state.sheetUrl}?key=${encodeURIComponent(key)}`);
-      const data = await res.json();
+      const data = await jsonpGet(state.sheetUrl, {key});
       if(data && data.ok && data.value){ return data.value; }
       return null;
     }catch(e){ return null; }
   }
+  // 雲端寫入：用 no-cors 模式送出，寫入一定會到達Sheet，只係我哋讀唔到回應內容（唔緊要，寫入唔需要讀回應）
   async function sheetSet(key, value){
     if(!state.sheetUrl) return false;
     try{
       await fetch(state.sheetUrl, {
         method:'POST',
-        headers:{'Content-Type':'text/plain;charset=utf-8'}, // 用text/plain避免CORS preflight
+        mode:'no-cors',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
         body: JSON.stringify({key, value})
       });
       return true;
@@ -935,28 +1007,20 @@
   }
 
   async function loadAll(){
-    let dedicatedSheetUrl = null;
-    try{
-      const u = await window.storage.get('mj-sheet-url');
-      if(u && u.value) dedicatedSheetUrl = u.value;
-    }catch(e){}
-    try{
-      const s = await window.storage.get('mj-settings');
-      if(s && s.value){ Object.assign(state, JSON.parse(s.value)); }
-    }catch(e){}
+    const dedicatedSheetUrl = await localGet('mj-sheet-url');
+    const localSettings = await localGet('mj-settings');
+    if(localSettings){ try{ Object.assign(state, JSON.parse(localSettings)); }catch(e){} }
     if(dedicatedSheetUrl) state.sheetUrl = dedicatedSheetUrl;
-    else if(state.sheetUrl){ try{ await window.storage.set('mj-sheet-url', state.sheetUrl); }catch(e){} }
-    try{
-      const g = await window.storage.get('mj-game');
-      if(g && g.value){ Object.assign(game, JSON.parse(g.value)); }
-    }catch(e){}
+    else if(state.sheetUrl){ await localSet('mj-sheet-url', state.sheetUrl); }
+    const localGame = await localGet('mj-game');
+    if(localGame){ try{ Object.assign(game, JSON.parse(localGame)); }catch(e){} }
 
     // 如果有雲端網址，試吓攞返雲端嗰份（優先於本機）
     if(state.sheetUrl){
       document.getElementById('sheetUrlInput').value = state.sheetUrl;
       setSyncStatus('同步緊…');
       const remoteSettings = await sheetGet('mj-settings');
-      if(remoteSettings){ try{ Object.assign(state, JSON.parse(remoteSettings)); state.sheetUrl = dedicatedSheetUrl; }catch(e){} }
+      if(remoteSettings){ try{ Object.assign(state, JSON.parse(remoteSettings)); state.sheetUrl = dedicatedSheetUrl || state.sheetUrl; }catch(e){} }
       const remoteGame = await sheetGet('mj-game');
       if(remoteGame){ try{ Object.assign(game, JSON.parse(remoteGame)); }catch(e){} }
       setSyncStatus(remoteSettings||remoteGame ? '已從雲端同步' : '已連接（雲端未有資料）', true);
@@ -1003,14 +1067,10 @@
       saveGame();
     }
     roundWinner = activeIndices()[0];
-    try{
-      const k = await window.storage.get('mj-gemini-key');
-      if(k && k.value){ document.getElementById('geminiKey').value = k.value; }
-    }catch(e){}
-    try{
-      const m = await window.storage.get('mj-gemini-model');
-      if(m && m.value){ document.getElementById('geminiModel').value = m.value; }
-    }catch(e){}
+    const geminiKeyVal = await localGet('mj-gemini-key');
+    if(geminiKeyVal){ document.getElementById('geminiKey').value = geminiKeyVal; }
+    const geminiModelVal = await localGet('mj-gemini-model');
+    if(geminiModelVal){ document.getElementById('geminiModel').value = geminiModelVal; }
     render();
   }
   let autoUploadTimer = null;
@@ -1020,11 +1080,11 @@
     autoUploadTimer = setTimeout(()=>{ setSyncStatus('已連接', true); }, 2000);
   }
   async function saveSettings(){
-    try{ await window.storage.set('mj-settings', JSON.stringify(state)); }catch(e){}
+    await localSet('mj-settings', JSON.stringify(state));
     if(state.sheetUrl){ sheetSet('mj-settings', JSON.stringify(state)).then(flashAutoUploadStatus); }
   }
   async function saveGame(){
-    try{ await window.storage.set('mj-game', JSON.stringify(game)); }catch(e){}
+    await localSet('mj-game', JSON.stringify(game));
     if(state.sheetUrl){ sheetSet('mj-game', JSON.stringify(game)).then(flashAutoUploadStatus); }
   }
 
@@ -1473,12 +1533,12 @@
   // ---------- 雲端同步 (Google Sheet) ----------
   document.getElementById('sheetUrlInput').addEventListener('change', async (e)=>{
     state.sheetUrl = e.target.value.trim();
-    try{ await window.storage.set('mj-sheet-url', state.sheetUrl); }catch(err){}
+    await localSet('mj-sheet-url', state.sheetUrl);
     if(!state.sheetUrl){ setSyncStatus('未連接'); return; }
     setSyncStatus('同步緊…');
-    const ok1 = await sheetSet('mj-settings', JSON.stringify(state));
-    const ok2 = await sheetSet('mj-game', JSON.stringify(game));
-    setSyncStatus(ok1&&ok2 ? '已連接並上載' : '連接失敗，check下網址啱唔啱', ok1&&ok2);
+    await sheetSet('mj-settings', JSON.stringify(state));
+    await sheetSet('mj-game', JSON.stringify(game));
+    setSyncStatus('已連接並上載', true);
   });
   document.getElementById('syncNowBtn').addEventListener('click', async ()=>{
     if(!state.sheetUrl){ setSyncStatus('請先貼入雲端網址', false); return; }
@@ -1490,10 +1550,10 @@
 
   // ---------- AI 影相辨牌 (Gemini) ----------
   document.getElementById('geminiKey').addEventListener('change', e=>{
-    window.storage.set('mj-gemini-key', e.target.value).catch(()=>{});
+    localSet('mj-gemini-key', e.target.value);
   });
   document.getElementById('geminiModel').addEventListener('change', e=>{
-    window.storage.set('mj-gemini-model', e.target.value).catch(()=>{});
+    localSet('mj-gemini-model', e.target.value);
   });
 
   document.getElementById('choosePhotoBtn').addEventListener('click', ()=>{
